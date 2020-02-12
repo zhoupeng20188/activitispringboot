@@ -27,10 +27,6 @@
             <groupId>org.activiti</groupId>
             <artifactId>activiti-spring-boot-starter</artifactId>
             <version>7.1.0.M6</version>
-            <!--<version>7.1.0.M5</version>-->
-            <!--<version>7.1.0.M1</version>-->
-            <!--<version>7.0.0.SR1</version>-->
-            <!--<version>7.0.0.Beta2</version>-->
         </dependency>
 
         <!-- 只加mysql的驱动包还不够，必须要加jdbc的jar包，不然启动会报错-->
