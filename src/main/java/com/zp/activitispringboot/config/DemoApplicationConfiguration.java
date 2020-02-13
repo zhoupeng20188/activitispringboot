@@ -25,10 +25,13 @@ public class DemoApplicationConfiguration {
         InMemoryUserDetailsManager inMemoryUserDetailsManager = new InMemoryUserDetailsManager();
 
         String[][] usersGroupsAndRoles = {
-                {"system", "password", "ROLE_ACTIVITI_USER"},
+                {"salaboy", "password", "ROLE_ACTIVITI_USER", "GROUP_activitiTeam"},
+                {"ryandawsonuk", "password", "ROLE_ACTIVITI_USER", "GROUP_activitiTeam"},
+                {"erdemedeiros", "password", "ROLE_ACTIVITI_USER", "GROUP_activitiTeam"},
+                {"other", "password", "ROLE_ACTIVITI_USER", "GROUP_otherTeam"},
                 {"admin", "password", "ROLE_ACTIVITI_ADMIN"},
-                {"f1", "password", "ROLE_ACTIVITI_USER", "GROUP_frisrtgroup"},
-                {"s1", "password", "ROLE_ACTIVITI_USER", "GROUP_frisrtgroup"},
+                {"f1", "password", "ROLE_ACTIVITI_USER", "GROUP_firstGroup"},
+                {"s1", "password", "ROLE_ACTIVITI_USER", "GROUP_secondGroup"},
         };
 
         for (String[] user : usersGroupsAndRoles) {

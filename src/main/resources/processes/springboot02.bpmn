@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:tns="http://www.activiti.org/test" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test" id="m1581479027992" name="">
-  <process id="springboot01" isExecutable="true" isClosed="false" processType="None">
+  <process id="springboot02" isExecutable="true" isClosed="false" processType="None">
     <startEvent id="_2" name="StartEvent"></startEvent>
-    <userTask id="_3" name="first" activiti:candidateGroups="activitiTeam"></userTask>
-    <userTask id="_4" name="second" activiti:candidateGroups="activitiTeam"></userTask>
+    <userTask id="_3" name="first" activiti:candidateGroups="firstGroup"></userTask>
+    <userTask id="_4" name="second" activiti:candidateGroups="secondGroup"></userTask>
     <endEvent id="_5" name="EndEvent"></endEvent>
     <sequenceFlow id="_6" sourceRef="_2" targetRef="_3"></sequenceFlow>
     <sequenceFlow id="_7" sourceRef="_3" targetRef="_4"></sequenceFlow>
     <sequenceFlow id="_8" sourceRef="_4" targetRef="_5"></sequenceFlow>
   </process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_springboot01">
-    <bpmndi:BPMNPlane bpmnElement="springboot01" id="BPMNPlane_springboot01">
+  <bpmndi:BPMNDiagram id="BPMNDiagram_springboot02">
+    <bpmndi:BPMNPlane bpmnElement="springboot02" id="BPMNPlane_springboot02">
       <bpmndi:BPMNShape bpmnElement="_2" id="BPMNShape__2">
         <omgdc:Bounds height="35.0" width="35.0" x="0.0" y="140.0"></omgdc:Bounds>
       </bpmndi:BPMNShape>
