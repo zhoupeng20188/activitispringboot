@@ -6,9 +6,18 @@
 * 7.1.0.M6开始加入了全新的版本控制逻辑，需要在default-project.json文件里指定版本，不然启动实例会报错
 # 流程图
 * springboot01.bpmn candidateGroup为官方示例中的activitiTeam
-* springboot01.bpmn candidateGroup为自定义的firstGroup和secondGroup
+* springboot02.bpmn candidateGroup为自定义的firstGroup和secondGroup
 # 问题点
 * activiti7的自动识别processes下的bpmn文件，但是只会识别第一次，如果再次新建一个bpmn文件，再执行代码数据库里不会增加记录
 * =》待确认 =》activiti7读的是target/classes下的processes里的bpmn文件，需要重新打包才会读取最新的bpmn文件
 * 上面结论不正确，看了源码暂时也没搞清楚怎么回事
-* 解决方法：用7之前的deploy方法来部署
+* 解决方法：用7之前的deploy方法来部署 => 此方法有问题，启动实例时会报错
+# 版本问题
+## 7.1.0.M6
+* 新增bpmn流程图时新增的这个不会自动部署
+* 把数据库删除后可以部署
+## 7.1.0.M5
+* 自动部署时会报错
+Cause: com.mysql.jdbc.exceptions.jdbc4.MySQLSyntaxErrorException: Unknown column 'VERSION_' in 'field list'
+## 7.1.0.M1 7.0.0.SR1
+* 新增bpmn流程图时可以自动部署，但是已经存在的会重复部署

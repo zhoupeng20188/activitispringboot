@@ -1,4 +1,4 @@
-package com.zp.activitispringboot.config;
+package com.zp.activitispringboot.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

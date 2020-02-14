@@ -44,6 +44,10 @@ public class DemoApplicationConfiguration extends WebSecurityConfigurerAdapter {
                 {"admin", "password", "ROLE_ACTIVITI_ADMIN"},
                 {"f1", "password", "ROLE_ACTIVITI_USER", "GROUP_firstGroup"},
                 {"s1", "password", "ROLE_ACTIVITI_USER", "GROUP_secondGroup"},
+                {"zhangsan", "password", "ROLE_ACTIVITI_USER", "GROUP_otherTeam"},
+                {"lisi", "password", "ROLE_ACTIVITI_USER", "GROUP_otherTeam"},
+                {"wangwu", "password", "ROLE_ACTIVITI_USER", "GROUP_otherTeam"},
+                {"zhaoliu", "password", "ROLE_ACTIVITI_USER", "GROUP_otherTeam"},
         };
 
         for (String[] user : usersGroupsAndRoles) {
