@@ -77,8 +77,11 @@ public class ActivitiUtil {
     public static void printProcessDefinitionList(String username){
         activitiUtil.securityUtil.logInAs(username);
         Page processDefinitionPage = getProcessDefinitionList(0, 10);
+        // getTotalItems()取得的是包含所有版本的总数
+        // getContent().size()取得的是流程数，多个版本的同一流程只算一次
         logger.info("流程定义数: " +
-                processDefinitionPage.getTotalItems());
+//                processDefinitionPage.getTotalItems());
+                processDefinitionPage.getContent().size());
         for (Object pd : processDefinitionPage.getContent()) {
             logger.info("\t > 流程定义: " + pd);
         }
