@@ -24,7 +24,7 @@ import java.util.Date;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-class ActivitispringbootApplicationTests {
+public class ActivitispringbootApplicationTests {
 
 
     private Logger logger = LoggerFactory.getLogger(ActivitispringbootApplicationTests.class);
@@ -54,7 +54,7 @@ class ActivitispringbootApplicationTests {
      * 查看流程定义 springboot01.bpmn
      */
     @Test
-    void testDefinition01() {
+    public void testDefinition01() {
         securityUtil.logInAs("salaboy");
         Page processDefinitionPage = processRuntime
                 .processDefinitions(Pageable.of(0, 10));
@@ -69,7 +69,7 @@ class ActivitispringbootApplicationTests {
      * 流程实例启动 springboot01.bpmn
      */
     @Test
-    void testStartInstance01(){
+    public void testStartInstance01(){
         securityUtil.logInAs("salaboy");
         String key = "springboot01";
         String content = "test instance";
@@ -91,7 +91,7 @@ class ActivitispringbootApplicationTests {
      * 查询任务并完成任务 springboot01.bpmn
      */
     @Test
-    void queryTaskAndComplete01(){
+    public void queryTaskAndComplete01(){
 
         securityUtil.logInAs("salaboy");
 
@@ -125,7 +125,7 @@ class ActivitispringbootApplicationTests {
      * 查看流程定义 springboot02.bpmn
      */
     @Test
-    void testDefinition02() {
+    public void testDefinition02() {
         securityUtil.logInAs("f1");
         Page processDefinitionPage = processRuntime
                 .processDefinitions(Pageable.of(0, 100));
@@ -140,7 +140,7 @@ class ActivitispringbootApplicationTests {
      * 流程实例启动 springboot02.bpmn
      */
     @Test
-    void testStartInstance02(){
+    public void testStartInstance02(){
         securityUtil.logInAs("f1");
         String key = "springboot02";
         String content = "test instance";
@@ -162,7 +162,7 @@ class ActivitispringbootApplicationTests {
      * 查询任务并完成任务 springboot02.bpmn
      */
     @Test
-    void queryTaskAndComplete02(){
+    public void queryTaskAndComplete02(){
 
 //        securityUtil.logInAs("f1");
         securityUtil.logInAs("s1");
@@ -186,7 +186,7 @@ class ActivitispringbootApplicationTests {
      * 手动方式部署
      */
     @Test
-    void deploy(){
+    public void deploy(){
         // 进行部署
         Deployment deployment = repositoryService.createDeployment()
                 // 文件夹的名称不能是process
