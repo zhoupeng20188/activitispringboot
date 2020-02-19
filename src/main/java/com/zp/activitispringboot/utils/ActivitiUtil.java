@@ -169,7 +169,7 @@ public class ActivitiUtil {
      * @param endNum 分页结束下标
      */
     public static void printTaskList(String assignee, Integer startNum, Integer endNum){
-        Page<Task> tasks = getTaskList(assignee,0, 10);
+        Page<Task> tasks = getTaskList(assignee,startNum, endNum);
         if( tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
