@@ -4,9 +4,13 @@
 * bpmn文件放在resources/processes目录下可以自动部署
 * activiti7自动生成的表里没有历史表，需要开启配置
 * 7.1.0.M6开始加入了全新的版本控制逻辑，需要在default-project.json文件里指定版本，不然启动实例会报错
-# 流程图
+# 流程图说明
 * springboot01.bpmn candidateGroup为官方示例中的activitiTeam
 * springboot02.bpmn candidateGroup为自定义的firstGroup和secondGroup
+* qingjia.bpmn 分享演示用
+* Bohui.bpmn 单个执行人的驳回，用连线方式可以解决
+* Bohui2.bpmn candidate user的驳回，用连线方式有问题
+* Bohui3.bpmn candidate user的驳回，用底层操作取得节点信息，重新指定节点流向解决
 # 问题点
 * activiti7的自动识别processes下的bpmn文件，但是只会识别第一次，如果再次新建一个bpmn文件，再执行代码数据库里不会增加记录
 * =》待确认 =》activiti7读的是target/classes下的processes里的bpmn文件，需要重新打包才会读取最新的bpmn文件
