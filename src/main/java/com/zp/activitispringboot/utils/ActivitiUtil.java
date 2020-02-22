@@ -422,9 +422,10 @@ public class ActivitiUtil {
 
 
     /**
+     *
      * 退回到上一节点
      *
-     * @param task
+     * @param task 当前任务
      */
     public static void backProcess(Task task) throws Exception {
 
