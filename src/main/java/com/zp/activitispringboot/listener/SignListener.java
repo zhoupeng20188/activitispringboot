@@ -62,9 +62,10 @@ public class SignListener implements TaskListener {
 			//会签结束，设置参数result为N，下个任务为申请
 			runtimeService.setVariable(exId, "result", false);
 			//下个任务
-			String processInstanceId = delegateTask.getProcessInstanceId();
-			Task task = taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult();
-			System.out.println("下个任务编码：" + task.getId() + "，下个任务名称：" + task.getName());
+			// todo 下个任务写法有问题，待调查
+//			String processInstanceId = delegateTask.getProcessInstanceId();
+//			Task task = taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult();
+//			System.out.println("下个任务编码：" + task.getId() + "，下个任务名称：" + task.getName());
 		}else{
 			Integer complete = (Integer) runtimeService.getVariable(exId, "nrOfCompletedInstances");
 			Integer all = (Integer) runtimeService.getVariable(exId, "nrOfInstances");
@@ -72,9 +73,10 @@ public class SignListener implements TaskListener {
 			if((complete + 1) / all == 1){
 				runtimeService.setVariable(exId, "result", true);
 				//下个任务
-				String processInstanceId = delegateTask.getProcessInstanceId();
-				Task task = taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult();
-				System.out.println("下个任务编码：" + task.getId() + "，下个任务名称：" + task.getName());
+				// todo 下个任务写法有问题，待调查
+//				String processInstanceId = delegateTask.getProcessInstanceId();
+//				Task task = taskService.createTaskQuery().processInstanceId(processInstanceId).singleResult();
+//				System.out.println("下个任务编码：" + task.getId() + "，下个任务名称：" + task.getName());
 			}
 		}
 	}
