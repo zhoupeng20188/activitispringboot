@@ -11,6 +11,8 @@
 * Bohui.bpmn 单个执行人的驳回，用连线方式可以解决
 * Bohui2.bpmn candidate user的驳回，用连线方式有问题
 * Bohui3.bpmn candidate user的驳回，用底层操作取得节点信息，重新指定节点流向解决
+* Huiqian.bpmn 节点多实例实现会签 条件：所有人通过才进入下一个节点
+* Huiqian2.bpmn 节点多实例实现会签 条件：一半以上通过则进入下一个节点
 # 问题点
 * activiti7的自动识别processes下的bpmn文件，但是只会识别第一次，如果再次新建一个bpmn文件，再执行代码数据库里不会增加记录
 * =》待确认 =》activiti7读的是target/classes下的processes里的bpmn文件，需要重新打包才会读取最新的bpmn文件

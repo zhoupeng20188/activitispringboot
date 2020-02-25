@@ -21,7 +21,7 @@ import com.zp.activitispringboot.utils.ActivitiUtil;
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class HuiqianTest {
+public class HuiqianTest2 {
 
     @Test
     public void testDefiniton(){
@@ -31,7 +31,7 @@ public class HuiqianTest {
 
     @Test
     public void testProcessInstance(){
-        String key = "huiqian";
+        String key = "huiqian2";
         String username = "zhangsan";
 
         HashMap<String, Object> map = new HashMap<>();
@@ -70,20 +70,9 @@ public class HuiqianTest {
     @Test
     public void testCompleteTask2(){
         String assignee = "lisi";
-        // 审批通过
-        HashMap map = new HashMap<String, Object>();
-        map.put("pass", true);
-        ActivitiUtil.completeTaskWithVariables(assignee, map);
+        ActivitiUtil.completeTask(assignee);
     }
 
-    @Test
-    public void testCompleteTask3(){
-        String assignee = "wangwu";
-     // 审批通过
-        HashMap map = new HashMap<String, Object>();
-        map.put("pass", true);
-        ActivitiUtil.completeTaskWithVariables(assignee, map);
-    }
 
     @Test
     public void testCompleteTask4(){
