@@ -12,12 +12,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.zp.activitispringboot.utils.ActivitiUtil;
 
 /**
- * 多实例实现会签 并行
- * 此示例通过条件为${nrOfInstances/nrOfCompletedInstances >= 0.5}
+ * 多实例实现会签 串行
+ * 此示例通过条件为${nrOfInstances == nrOfCompletedInstances}
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class HuiqianTest2 {
+public class HuiqianTest3 {
 
     @Test
     public void testDefiniton(){
@@ -27,7 +27,7 @@ public class HuiqianTest2 {
 
     @Test
     public void testProcessInstance(){
-        String key = "huiqian2";
+        String key = "huiqian3";
         String username = "zhangsan";
 
         HashMap<String, Object> map = new HashMap<>();
@@ -66,6 +66,12 @@ public class HuiqianTest2 {
     @Test
     public void testCompleteTask2(){
         String assignee = "lisi";
+        ActivitiUtil.completeTask(assignee);
+    }
+    
+    @Test
+    public void testCompleteTask3(){
+        String assignee = "wangwu";
         ActivitiUtil.completeTask(assignee);
     }
 

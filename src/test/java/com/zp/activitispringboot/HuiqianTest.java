@@ -12,7 +12,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import com.zp.activitispringboot.utils.ActivitiUtil;
 
 /**
- * 多实例实现会签
+ * 多实例实现会签 并行
+ * 此示例通过条件为${pass == false}
  * nrOfInstances（numberOfInstances）：会签中总共的实例数
  * nrOfCompletedInstances：已经完成的实例数量
  * nrOfActiviteInstances：当前活动的实例数量，即还没有完成的实例数量
