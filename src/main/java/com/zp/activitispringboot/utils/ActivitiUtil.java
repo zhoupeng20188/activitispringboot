@@ -1,5 +1,6 @@
 package com.zp.activitispringboot.utils;
 
+import com.zp.activitispringboot.cmd.JumpCmd;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessRuntime;
@@ -10,14 +11,18 @@ import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.runtime.TaskRuntime;
 import org.activiti.bpmn.model.Process;
 import org.activiti.bpmn.model.*;
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
+import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
+import org.activiti.engine.impl.context.Context;
+import org.activiti.engine.impl.interceptor.Command;
+import org.activiti.engine.impl.interceptor.CommandContext;
+import org.activiti.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.activiti.engine.repository.Deployment;
+import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
+import org.activiti.engine.runtime.ExecutionQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class ActivitiUtil {
@@ -274,108 +276,6 @@ public class ActivitiUtil {
         logger.info("流程实例启动成功: " + processInstance);
     }
 
-
-    public void rejectFlow(org.activiti.engine.task.Task curTask) {
-        String processDefinitionId = curTask.getProcessDefinitionId();
-
-
-//        ProcessDefinitionEntity processDefinitionEntity = (ProcessDefinitionEntity) repositoryService.createProcessDefinitionQuery()
-//                .processDefinitionId(processDefinitionId)
-//                .singleResult();
-
-
-        /**
-         * findActivity,getIncomingTransitions,getOutgoingTransitions等方法在6开始就已经移除了
-         * 最新写法是取得BpmnModel
-         */
-
-        BpmnModel bpmnModel = repositoryService
-                .getBpmnModel(repositoryService.createProcessDefinitionQuery()
-                        .processDefinitionId(processDefinitionId)
-                        .singleResult().getId());
-
-        Process process = bpmnModel.getMainProcess();
-
-        FlowElement curFlowElement = process.getFlowElement(curTask.getTaskDefinitionKey());
-
-
-//        //获取当前activity
-//        ActivityImpl curActivity = processDefinitionEntity
-//                .findActivity(curTask.getTaskDefinitionKey());
-        UserTask current = (UserTask) curFlowElement;
-
-//         取得上一步活动的节点流向
-//        List<PvmTransition> incomingTransitions = curActivity.getIncomingTransitions();
-
-        // 取得上一步活动节点的流向
-        List<SequenceFlow> incomingFlows = current.getIncomingFlows();
-
-        //清空指定节点所有流向并暂时先将所有流向变量暂时存储在一个新的集合（主要是为后来恢复正常流程走向做准备）
-
-//        List<PvmTransition> pvmTransitionList = new ArrayList<>();
-        List<FlowElement> bakOutGoingFlows = new ArrayList<>();
-
-//        List<PvmTransition> outgoingTransitions = curActivity.getOutgoingTransitions();
-
-        // 取得所有出去流向
-        List<SequenceFlow> outgoingFlows = current.getOutgoingFlows();
-
-
-//        for (PvmTransition pvmTransition: outgoingTransitions) {
-//            pvmTransitionList.add(pvmTransition);
-//        }
-//        outgoingTransitions.clear();
-
-        for (SequenceFlow outgoingFlow : outgoingFlows) {
-            bakOutGoingFlows.add(outgoingFlow);
-        }
-
-        outgoingFlows.clear();
-
-        //创建新的流向并且设置新的流向的目标节点
-        // （将该节点的流程走向都设置为上一节点的流程走向，目的是相当于形成一个回路）
-//        List<TransitionImpl> newTransitionList = new ArrayList<>();
-//
-//
-//
-//        for (PvmTransition pvmTransition : incomingTransitions) {
-//            PvmActivity source = pvmTransition.getSource();
-//            ActivityImpl inActivity = processDefinitionEntity.findActivity(source.getId());
-//            TransitionImpl newOutgoingTransition = curActivity.createOutgoingTransition();
-//            newOutgoingTransition.setDestination(inActivity);
-//            newTransitionList.add(newOutgoingTransition);
-//
-//        }
-
-
-
-
-        for(FlowElement flowElement: incomingFlows) {
-//            flowElement
-        }
-
-        // 完成任务
-
-        List<org.activiti.engine.task.Task> taskList = taskService.createTaskQuery().processInstanceId(curTask.getProcessInstanceId()).list();
-        for (org.activiti.engine.task.Task task : taskList) {
-            taskService.complete(task.getId());
-            historyService.deleteHistoricTaskInstance(task.getId());
-        }
-
-
-        // 恢复方向（实现驳回功能后恢复原来正常的方向）
-//        for (TransitionImpl transitionImpl : newTransitionList) {
-//            curActivity.getOutgoingTransitions().remove(transitionImpl);
-//        }
-//
-//
-//        for (PvmTransition pvmTransition : pvmTransitionList) {
-//            outgoingTransitions.add(pvmTransition);
-//        }
-
-    }
-
-
     /**
      * 审核(candidate user的场合)
      * @param assignee 执行人
@@ -422,9 +322,7 @@ public class ActivitiUtil {
 
 
     /**
-     *
      * 退回到上一节点
-     *
      * @param task 当前任务
      */
     public static void backProcess(Task task) throws Exception {
@@ -432,11 +330,7 @@ public class ActivitiUtil {
         String processInstanceId = task.getProcessInstanceId();
 
         // 取得所有历史任务按时间降序排序
-        List<HistoricTaskInstance> htiList = activitiUtil.historyService.createHistoricTaskInstanceQuery()
-                .processInstanceId(processInstanceId)
-                .orderByTaskCreateTime()
-                .desc()
-                .list();
+        List<HistoricTaskInstance> htiList = getHistoryTaskList(processInstanceId);
 
         if (ObjectUtils.isEmpty(htiList) || htiList.size() < 2) {
             return;
@@ -445,7 +339,7 @@ public class ActivitiUtil {
         // list里的第二条代表上一个任务
         HistoricTaskInstance lastTask = htiList.get(1);
 
-        // list里第二条代表当前任务
+        // list里第一条代表当前任务
         HistoricTaskInstance curTask = htiList.get(0);
 
         // 当前节点的executionId
@@ -478,7 +372,6 @@ public class ActivitiUtil {
 
         // 得到上个节点的信息
         FlowNode lastFlowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(lastActivityId);
-
 
         // 取得当前节点的信息
         Execution execution = activitiUtil.runtimeService.createExecutionQuery().executionId(curExecutionId).singleResult();
@@ -513,6 +406,196 @@ public class ActivitiUtil {
         // 设置执行人
         if(nextTask!=null) {
             activitiUtil.taskService.setAssignee(nextTask.getId(), lastTask.getAssignee());
+        }
+    }
+
+    public static List<HistoricTaskInstance> getHistoryTaskList(String processInstanceId) {
+        return activitiUtil.historyService.createHistoricTaskInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .orderByTaskCreateTime()
+                .desc()
+                .list();
+    }
+
+    /**
+     * 动态增加任务
+     * @param task 当前任务
+     * @param assignee 增加任务的指派人
+     */
+    public static void addTask(Task task, String assignee) throws Exception {
+        String processInstanceId = task.getProcessInstanceId();
+
+        // 取得所有历史任务按时间降序排序
+        List<HistoricTaskInstance> htiList = getHistoryTaskList(processInstanceId);
+
+        if (ObjectUtils.isEmpty(htiList) || htiList.size() < 2) {
+            return;
+        }
+
+        // list里第一条代表当前任务
+        HistoricTaskInstance curTask = htiList.get(0);
+
+        // 当前节点的executionId
+        String curExecutionId = curTask.getExecutionId();
+
+        String processDefinitionId = task.getProcessDefinitionId();
+        BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(processDefinitionId);
+
+        // 取得当前节点的信息
+        Execution execution = activitiUtil.runtimeService.createExecutionQuery().executionId(curExecutionId).singleResult();
+        String curActivityId = execution.getActivityId();
+        FlowNode curFlowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(curActivityId);
+
+        //记录当前节点的原活动方向
+        List<SequenceFlow> oriSequenceFlows = new ArrayList<>();
+        oriSequenceFlows.addAll(curFlowNode.getOutgoingFlows());
+
+        //清理活动方向
+        curFlowNode.getOutgoingFlows().clear();
+
+
+        // 创建新节点
+        UserTask newUserTask = new UserTask();
+        newUserTask.setId("destinyD");
+        newUserTask.setName("加签节点 destinyD");
+        newUserTask.setAssignee(assignee);
+
+        // 设置新节点的出线为当前节点的出线
+        newUserTask.setOutgoingFlows(oriSequenceFlows);
+
+        // 当前节点与新节点的连线
+        SequenceFlow sequenceFlow = new SequenceFlow();
+        sequenceFlow.setId("extra");
+        sequenceFlow.setSourceFlowElement(curFlowNode);
+        sequenceFlow.setTargetFlowElement(newUserTask);
+
+        // 将当前节点的出线设置为指向新节点
+        curFlowNode.setOutgoingFlows(Arrays.asList(sequenceFlow));
+
+        // 取得流程定义缓存
+        ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
+        ProcessEngineConfigurationImpl processEngineConfiguration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
+        ProcessDefinitionCacheEntry cacheEntry = processEngineConfiguration.getProcessDefinitionCache().get(processDefinitionId);
+
+        // 从缓存中取得process对象
+        Process process = cacheEntry.getProcess();
+        // 添加新节点到process中
+        process.addFlowElement(newUserTask);
+        // 添加新连线到process中
+        process.addFlowElement(sequenceFlow);
+
+        // 更新缓存
+        cacheEntry.setProcess(process);
+
+//        // 完成任务
+//        activitiUtil.taskService.complete(task.getId());
+//        System.out.println("完成任务");
+
+//        // 取得managementService
+//        ManagementService managementService = processEngine.getManagementService();
+//
+//        // 立即生效
+//        managementService.executeCommand(new JumpCmd(task.getId(), newUserTask.getId()));
+
+        System.out.println("加签成功");
+
+
+
+//        FlowElement nextUserFlowElement = getNextUserFlowElement(task);
+//        System.out.println("下个任务为：" + nextUserFlowElement.getName());
+    }
+
+
+    /**
+     * 创建任务,指定执行人
+     * @param assignee 登录用户
+     * @param assigneeNewTask 执行人
+     */
+    public static void createTask(String assignee,String parentTaskId, String assigneeNewTask){
+        activitiUtil.securityUtil.logInAs(assignee);
+        activitiUtil.taskRuntime.create(
+                TaskPayloadBuilder.create()
+                        .withName("First Team Task")
+                        .withDescription("This is something really important")
+                        .withParentTaskId(parentTaskId)
+                        .withAssignee(assigneeNewTask)
+                        .withPriority(10)
+                        .build());
+    }
+
+
+    /**
+     * 获取当前任务节点的下一个任务节点
+     * @param task 当前任务节点
+     * @return 下个任务节点
+     * @throws Exception
+     */
+    public static FlowElement getNextUserFlowElement(Task task) throws Exception {
+        // 取得已提交的任务
+        HistoricTaskInstance historicTaskInstance = activitiUtil.historyService.createHistoricTaskInstanceQuery()
+                .taskId(task.getId()).singleResult();
+
+        // 取得正在流转的流程实例,若已完成则为null
+//        ProcessInstance processInstance = processRuntime.processInstance(historicTaskInstance.getProcessInstanceId());
+
+        //每个流程实例只有一个executionId
+        //获得流程定义
+        ProcessDefinition processDefinition=activitiUtil.repositoryService.getProcessDefinition(historicTaskInstance.getProcessDefinitionId());
+
+        //获得当前流程的活动ID
+        ExecutionQuery executionQuery =activitiUtil.runtimeService.createExecutionQuery();
+        Execution execution =executionQuery.executionId(historicTaskInstance.getExecutionId()).singleResult();
+        String activityId=execution.getActivityId();
+        UserTask userTask =null;
+        while (true){
+            //根据活动节点获取当前的组件信息
+            FlowNode flowNode =getFlowNode(processDefinition.getId(),activityId);
+            //获取该流程组件的之后/之前的组件信息
+            List<SequenceFlow> sequenceFlowListOutGoing=flowNode.getOutgoingFlows();
+//        List<SequenceFlow> sequenceFlowListIncoming=flowNode.getIncomingFlows();
+
+            //获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
+            //sequenceFlowListOutGoing数量可能大于1,可以自己做判断,此处只取第一个
+            FlowElement flowElement =sequenceFlowListOutGoing.get(0).getTargetFlowElement();
+            if (flowElement instanceof UserTask){
+                userTask =(UserTask)flowElement;
+                System.out.println("获取该任务节点的审批信息...");
+                break;
+            }else {
+                //下一节点不是任务userTask的任务节点,所以要获取再下一个节点的信息,直到获取到userTask任务节点信息
+                String flowElementId=flowElement.getId();
+                activityId=flowElementId;
+                continue;
+            }
+        }
+        return userTask;
+    }
+
+    /**
+     * 根据活动节点和流程定义ID获取该活动节点的组件信息
+     */
+    public static FlowNode getFlowNode(String processDefinitionId,String activityId){
+        BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(processDefinitionId);
+        FlowNode flowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(activityId);
+        return flowNode;
+    }
+
+    /**
+     * 跳转任务
+     * @param assignee
+     */
+    public static void jumpTask(String assignee) {
+        activitiUtil.securityUtil.logInAs(assignee);
+        Page<Task> tasks = getTaskList(assignee,0, 10);
+        if( tasks.getTotalItems() > 0) {
+            // 有任务时，完成任务
+            for (Task task : tasks.getContent()) {
+                System.out.println(task);
+                ProcessEngine defaultProcessEngine = ProcessEngines.getDefaultProcessEngine();
+                ManagementService managementService = defaultProcessEngine.getManagementService();
+                // 跳转到userTask1
+                managementService.executeCommand(new JumpCmd(task.getId(),"usertask1"));
+            }
         }
     }
 }
