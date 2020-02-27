@@ -319,6 +319,30 @@ public class ActivitiUtil {
 
 
     }
+    
+    
+    /**
+     * 拾取任务
+     * @param assignee
+     * @param taskId
+     */
+    public static void claimTask(String assignee, String taskId) {
+    	// 拾取任务
+        activitiUtil.taskRuntime.claim(
+                TaskPayloadBuilder.claim().withTaskId(taskId).build());
+        logger.info(assignee + "拾取任务成功");
+    }
+    
+    
+    /**
+     * 将任务指派给其它人
+     * @param taskId
+     * @param assigneeOther
+     */
+    public static void transferTask(String taskId, String assigneeOther) {
+    	activitiUtil.taskService.setAssignee(taskId, assigneeOther);
+    	logger.info("任务已被指派给" + assigneeOther);
+    }
 
 
     /**

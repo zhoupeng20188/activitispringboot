@@ -14,6 +14,7 @@
 * Huiqian.bpmn 节点多实例实现会签 条件：所有人通过才进入下一个节点
 * Huiqian2.bpmn 节点多实例实现会签 条件：一半以上通过则进入下一个节点
 * Jiaqian.bpmn 动态加签（即动态增加一个节点）：暂时无法实现，只能通过修改流程图或者代码动态增加节点后保存到流程图来实现加签，但这样一来会影响所有实例。建议尽量用节点多实例会签来替代。
+* HuiqianDaiqian.bpmn 节点多实例实现代签
 # 问题点
 * activiti7的自动识别processes下的bpmn文件，但是只会识别第一次，如果再次新建一个bpmn文件，再执行代码数据库里不会增加记录
 * =》待确认 =》activiti7读的是target/classes下的processes里的bpmn文件，需要重新打包才会读取最新的bpmn文件
