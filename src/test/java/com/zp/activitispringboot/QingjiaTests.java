@@ -1,11 +1,19 @@
 package com.zp.activitispringboot;
 
 import com.zp.activitispringboot.utils.ActivitiUtil;
+import org.activiti.api.runtime.shared.query.Page;
+import org.activiti.api.task.model.Task;
+import org.activiti.engine.ProcessEngine;
+import org.activiti.engine.ProcessEngines;
+import org.activiti.engine.TaskService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.HashMap;
 
 @RunWith(SpringRunner.class)
@@ -75,5 +83,26 @@ public class QingjiaTests {
     public void testCompleteTask4(){
         String assignee = "zhaoliu";
         ActivitiUtil.completeTask(assignee);
+    }
+
+    /**
+     * 取得当前任务的下一个任务
+     */
+    @Test
+    public void getNextTask() throws Exception {
+        String assignee = "lisi";
+        Task task = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0);
+        ActivitiUtil.getNextUserFlowElement(task);
+    }
+
+    @Test
+    public void geProcessDiagram() throws FileNotFoundException {
+//        String assignee = "wangwu";
+        String filepath = "F:\\processDiagram.png";
+//        Task task = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0);
+//        String processInstanceId = task.getProcessInstanceId();
+        String processInstanceId = "625b652e-5a03-11ea-8131-1c1b0d7b318e";
+        ActivitiUtil.getFlowImgByInstanceId(processInstanceId, new FileOutputStream(filepath));
+        System.out.println("图片生成成功");
     }
 }

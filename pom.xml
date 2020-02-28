@@ -84,6 +84,13 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.activiti</groupId>
+            <artifactId>activiti-image-generator</artifactId>
+            <!--<version>5.22.0</version>-->
+            <version>7.1.0.M6</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
