@@ -1,6 +1,7 @@
 package com.zp.activitispringboot.utils;
 
 import com.zp.activitispringboot.cmd.JumpCmd;
+import com.zp.activitispringboot.custom.CustomProcessDiagramGenerator;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessRuntime;
@@ -41,6 +42,7 @@ import java.util.*;
 
 /**
  * Activiti工具类
+ *
  * @author zp
  */
 @Component
@@ -600,7 +602,6 @@ public class ActivitiUtil {
             FlowNode flowNode = getFlowNode(processDefinition.getId(), activityId);
             //获取该流程组件的之后/之前的组件信息
             List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
-//        List<SequenceFlow> sequenceFlowListIncoming=flowNode.getIncomingFlows();
 
             /**
              * 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
@@ -658,7 +659,8 @@ public class ActivitiUtil {
      * @param historicActivityInstances
      * @return
      */
-    private static List<String> getHighLightedFlows(BpmnModel bpmnModel, List<HistoricActivityInstance> historicActivityInstances) {
+    private static List<String> getHighLightedFlows(BpmnModel bpmnModel,
+                                                    List<HistoricActivityInstance> historicActivityInstances) {
         // 高亮流程已发生流转的线id集合
         List<String> highLightedFlowIds = new ArrayList<>();
         // 全部活动节点
@@ -737,9 +739,10 @@ public class ActivitiUtil {
      *
      * @param processInstanceId
      * @param outputStream
+     * @param useCustomColor    true:用自定义的颜色（完成节点绿色，当前节点红色），default:用默认的颜色（红色）
      * @return
      */
-    public static void getFlowImgByInstanceId(String processInstanceId, OutputStream outputStream) {
+    public static void getFlowImgByInstanceId(String processInstanceId, OutputStream outputStream, boolean useCustomColor) {
         try {
             if (StringUtils.isEmpty(processInstanceId)) {
                 logger.error("processInstanceId is null");
@@ -752,8 +755,23 @@ public class ActivitiUtil {
                     .orderByHistoricActivityInstanceId().asc().list();
             // 高亮已经执行流程节点ID集合
             List<String> highLightedActivitiIds = new ArrayList<>();
+            int index = 1;
             for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
-                highLightedActivitiIds.add(historicActivityInstance.getActivityId());
+                if (useCustomColor) {
+                    // 用自定义颜色
+                    if (index == historicActivityInstances.size()) {
+                        // 当前节点
+                        highLightedActivitiIds.add(historicActivityInstance.getActivityId() + "#");
+                    } else {
+                        // 已完成节点
+                        highLightedActivitiIds.add(historicActivityInstance.getActivityId());
+                    }
+                } else {
+                    // 用默认颜色
+                    highLightedActivitiIds.add(historicActivityInstance.getActivityId());
+                }
+
+                index++;
             }
 
             List<HistoricProcessInstance> historicFinishedProcessInstances = activitiUtil.historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).finished()
@@ -763,8 +781,15 @@ public class ActivitiUtil {
             ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
             ProcessEngineConfigurationImpl processEngineConfiguration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
 
+            if (useCustomColor) {
+                // 使用自定义的程序图片生成器
+                processDiagramGenerator = new CustomProcessDiagramGenerator();
 
-            processDiagramGenerator = new DefaultProcessDiagramGenerator();
+            } else {
+                // 使用默认的程序图片生成器
+                processDiagramGenerator = new DefaultProcessDiagramGenerator();
+            }
+
 
             BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(historicProcessInstance.getProcessDefinitionId());
             // 高亮流程已发生流转的线id集合

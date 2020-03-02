@@ -101,8 +101,8 @@ public class QingjiaTests {
         String filepath = "F:\\processDiagram.png";
 //        Task task = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0);
 //        String processInstanceId = task.getProcessInstanceId();
-        String processInstanceId = "625b652e-5a03-11ea-8131-1c1b0d7b318e";
-        ActivitiUtil.getFlowImgByInstanceId(processInstanceId, new FileOutputStream(filepath));
+        String processInstanceId = "bc889f47-5c5f-11ea-863b-1c1b0d7b318e";
+        ActivitiUtil.getFlowImgByInstanceId(processInstanceId, new FileOutputStream(filepath), true);
         System.out.println("图片生成成功");
     }
 }
