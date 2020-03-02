@@ -682,7 +682,8 @@ public class ActivitiUtil {
         // 遍历已完成的活动实例，从每个实例的outgoingFlows中找到已执行的
         for (HistoricActivityInstance currentActivityInstance : finishedActivityInstances) {
             // 获得当前活动对应的节点信息及outgoingFlows信息
-            currentFlowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(currentActivityInstance.getActivityId(), true);
+            currentFlowNode = (FlowNode) bpmnModel.getMainProcess()
+                    .getFlowElement(currentActivityInstance.getActivityId(), true);
             List<SequenceFlow> sequenceFlows = currentFlowNode.getOutgoingFlows();
 
             /**
@@ -749,10 +750,15 @@ public class ActivitiUtil {
                 return;
             }
             // 获取历史流程实例
-            HistoricProcessInstance historicProcessInstance = activitiUtil.historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
+            HistoricProcessInstance historicProcessInstance = activitiUtil.historyService
+                    .createHistoricProcessInstanceQuery()
+                    .processInstanceId(processInstanceId).singleResult();
             // 获取流程中已经执行的节点，按照执行先后顺序排序
-            List<HistoricActivityInstance> historicActivityInstances = activitiUtil.historyService.createHistoricActivityInstanceQuery().processInstanceId(processInstanceId)
-                    .orderByHistoricActivityInstanceId().asc().list();
+            List<HistoricActivityInstance> historicActivityInstances = activitiUtil.historyService
+                    .createHistoricActivityInstanceQuery()
+                    .processInstanceId(processInstanceId)
+                    .orderByHistoricActivityInstanceId()
+                    .asc().list();
             // 高亮已经执行流程节点ID集合
             List<String> highLightedActivitiIds = new ArrayList<>();
             int index = 1;
@@ -774,13 +780,7 @@ public class ActivitiUtil {
                 index++;
             }
 
-            List<HistoricProcessInstance> historicFinishedProcessInstances = activitiUtil.historyService.createHistoricProcessInstanceQuery().processInstanceId(processInstanceId).finished()
-                    .list();
             ProcessDiagramGenerator processDiagramGenerator = null;
-
-            ProcessEngine processEngine = ProcessEngines.getDefaultProcessEngine();
-            ProcessEngineConfigurationImpl processEngineConfiguration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
-
             if (useCustomColor) {
                 // 使用自定义的程序图片生成器
                 processDiagramGenerator = new CustomProcessDiagramGenerator();
@@ -791,7 +791,8 @@ public class ActivitiUtil {
             }
 
 
-            BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(historicProcessInstance.getProcessDefinitionId());
+            BpmnModel bpmnModel = activitiUtil.repositoryService
+                    .getBpmnModel(historicProcessInstance.getProcessDefinitionId());
             // 高亮流程已发生流转的线id集合
             List<String> highLightedFlowIds = getHighLightedFlows(bpmnModel, historicActivityInstances);
 
@@ -799,8 +800,6 @@ public class ActivitiUtil {
             InputStream imageStream = processDiagramGenerator.generateDiagram(bpmnModel,
                     highLightedActivitiIds, highLightedFlowIds, "宋体",
                     "微软雅黑", "黑体");
-//            InputStream imageStream = processDiagramGenerator.generateDiagram(bpmnModel, "png",
-//                    highLightedActivitiIds, highLightedFlowIds, "宋体", "微软雅黑", "黑体", null, 2.0);
 
             // 输出图片内容
             Integer byteSize = 1024;
