@@ -39,6 +39,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
 
+/**
+ * Activiti工具类
+ * @author zp
+ */
 @Component
 public class ActivitiUtil {
     private static Logger logger = LoggerFactory.getLogger(ActivitiUtil.class);
@@ -83,10 +87,11 @@ public class ActivitiUtil {
 
     /**
      * 流程部署
-     * @param bpmnName bpmn文件名(不包含扩展名)
+     *
+     * @param bpmnName   bpmn文件名(不包含扩展名)
      * @param deployName 流程部署名称
      */
-    public static void deploy(String bpmnName, String deployName){
+    public static void deploy(String bpmnName, String deployName) {
         // 进行部署
         Deployment deployment = activitiUtil.repositoryService.createDeployment()
                 // 文件夹的名称不能是process
@@ -102,15 +107,15 @@ public class ActivitiUtil {
 
     /**
      * 打印所有流程定义
+     *
      * @param username 用户名
      */
-    public static void printProcessDefinitionList(String username){
+    public static void printProcessDefinitionList(String username) {
         activitiUtil.securityUtil.logInAs(username);
         Page processDefinitionPage = getProcessDefinitionList(0, 10);
         // getTotalItems()取得的是包含所有版本的总数
         // getContent().size()取得的是流程数，多个版本的同一流程只算一次
         logger.info("流程定义数: " +
-//                processDefinitionPage.getTotalItems());
                 processDefinitionPage.getContent().size());
         for (Object pd : processDefinitionPage.getContent()) {
             logger.info("\t > 流程定义: " + pd);
@@ -119,23 +124,25 @@ public class ActivitiUtil {
 
     /**
      * 获取所有流程定义
+     *
      * @param startNum 分页开始下标
-     * @param endNum 分页结束下标
+     * @param endNum   分页结束下标
      * @return 流程定义list
      */
-    public static Page getProcessDefinitionList(Integer startNum, Integer endNum){
+    public static Page getProcessDefinitionList(Integer startNum, Integer endNum) {
         return activitiUtil.processRuntime
                 .processDefinitions(Pageable.of(startNum, endNum));
     }
 
     /**
      * 完成任务
+     *
      * @param assignee 指派人
      */
-    public static void completeTask(String assignee){
+    public static void completeTask(String assignee) {
 
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
@@ -149,13 +156,14 @@ public class ActivitiUtil {
 
     /**
      * 完成任务
-     * @param assignee 指派人
+     *
+     * @param assignee  指派人
      * @param variables 变量map
      */
-    public static void completeTaskWithVariables(String assignee, HashMap variables){
+    public static void completeTaskWithVariables(String assignee, HashMap variables) {
 
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
@@ -171,12 +179,13 @@ public class ActivitiUtil {
 
     /**
      * 候选人拾取并完成任务
+     *
      * @param assignee 指派人
      */
-    public static void completeTaskWithGroup(String assignee){
+    public static void completeTaskWithGroup(String assignee) {
 
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
@@ -194,12 +203,13 @@ public class ActivitiUtil {
 
     /**
      * 候选人拾取并完成任务并指定变量
+     *
      * @param assignee 指派人
      */
-    public static void completeTaskWithGroupWithVariables(String assignee, HashMap variables){
+    public static void completeTaskWithGroupWithVariables(String assignee, HashMap variables) {
 
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
@@ -220,13 +230,14 @@ public class ActivitiUtil {
 
     /**
      * 打印指派人所有任务
+     *
      * @param assignee 指派人
      * @param startNum 分页开始下标
-     * @param endNum 分页结束下标
+     * @param endNum   分页结束下标
      */
-    public static void printTaskList(String assignee, Integer startNum, Integer endNum){
-        Page<Task> tasks = getTaskList(assignee,startNum, endNum);
-        if( tasks.getTotalItems() > 0) {
+    public static void printTaskList(String assignee, Integer startNum, Integer endNum) {
+        Page<Task> tasks = getTaskList(assignee, startNum, endNum);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 logger.info("任务: " + task);
@@ -236,12 +247,13 @@ public class ActivitiUtil {
 
     /**
      * 查询当前指派人的任务
+     *
      * @param assignee 指派人
      * @param startNum 分页开始下标
-     * @param endNum 分页结束下标
+     * @param endNum   分页结束下标
      * @return 任务list
      */
-    public static Page<Task> getTaskList(String assignee, Integer startNum, Integer endNum){
+    public static Page<Task> getTaskList(String assignee, Integer startNum, Integer endNum) {
         activitiUtil.securityUtil.logInAs(assignee);
         return activitiUtil.taskRuntime.tasks(Pageable.of(startNum, endNum));
     }
@@ -249,10 +261,11 @@ public class ActivitiUtil {
 
     /**
      * 流程实例启动
-     * @param processKey 流程Key => 对应bpmn文件里的id
+     *
+     * @param processKey  流程Key => 对应bpmn文件里的id
      * @param processName 流程实例名
      */
-    public static void startProcessInstance(String username, String processKey, String processName){
+    public static void startProcessInstance(String username, String processKey, String processName) {
         activitiUtil.securityUtil.logInAs(username);
         ProcessInstance processInstance = activitiUtil.processRuntime
                 .start(ProcessPayloadBuilder
@@ -264,14 +277,13 @@ public class ActivitiUtil {
     }
 
     /**
-     *
-     * @param username 用户名
-     * @param processKey 流程Key => 对应bpmn文件里的id
+     * @param username    用户名
+     * @param processKey  流程Key => 对应bpmn文件里的id
      * @param processName 流程实例名
-     * @param variables 变量map
+     * @param variables   变量map
      */
     public static void startProcessInstanceWithVariables(String username,
-                                                         String processKey, String processName, HashMap variables){
+                                                         String processKey, String processName, HashMap variables) {
         activitiUtil.securityUtil.logInAs(username);
         ProcessInstance processInstance = activitiUtil.processRuntime
                 .start(ProcessPayloadBuilder
@@ -285,15 +297,16 @@ public class ActivitiUtil {
 
     /**
      * 审核(candidate user的场合)
-     * @param assignee 执行人
-     * @param auditFlg 审核flg, true：通过，false:驳回
+     *
+     * @param assignee  执行人
+     * @param auditFlg  审核flg, true：通过，false:驳回
      * @param variables 完成任务时带上变量集合
      * @throws Exception
      */
     public static void auditByCandidate(String assignee, boolean auditFlg, HashMap variables) throws Exception {
 
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
@@ -303,7 +316,7 @@ public class ActivitiUtil {
                 logger.info(assignee + "拾取任务成功");
 
 
-                if(auditFlg){
+                if (auditFlg) {
                     // 审核通过的场合
                     // 完成任务
                     activitiUtil.taskRuntime.complete(
@@ -313,12 +326,11 @@ public class ActivitiUtil {
                                     .build());
                     logger.info(assignee + "完成任务");
                     logger.info(assignee + "审核通过");
-                } else{
+                } else {
                     // 驳回的场合
                     backProcess(task);
                     logger.info(assignee + "审核驳回");
                 }
-
 
 
             }
@@ -326,34 +338,37 @@ public class ActivitiUtil {
 
 
     }
-    
-    
+
+
     /**
      * 拾取任务
+     *
      * @param assignee
      * @param taskId
      */
     public static void claimTask(String assignee, String taskId) {
-    	// 拾取任务
+        // 拾取任务
         activitiUtil.taskRuntime.claim(
                 TaskPayloadBuilder.claim().withTaskId(taskId).build());
         logger.info(assignee + "拾取任务成功");
     }
-    
-    
+
+
     /**
      * 将任务指派给其它人
+     *
      * @param taskId
      * @param assigneeOther
      */
     public static void transferTask(String taskId, String assigneeOther) {
-    	activitiUtil.taskService.setAssignee(taskId, assigneeOther);
-    	logger.info("任务已被指派给" + assigneeOther);
+        activitiUtil.taskService.setAssignee(taskId, assigneeOther);
+        logger.info("任务已被指派给" + assigneeOther);
     }
 
 
     /**
      * 退回到上一节点
+     *
      * @param task 当前任务
      */
     public static void backProcess(Task task) throws Exception {
@@ -363,7 +378,9 @@ public class ActivitiUtil {
         // 取得所有历史任务按时间降序排序
         List<HistoricTaskInstance> htiList = getHistoryTaskList(processInstanceId);
 
-        if (ObjectUtils.isEmpty(htiList) || htiList.size() < 2) {
+        Integer size = 2;
+
+        if (ObjectUtils.isEmpty(htiList) || htiList.size() < size) {
             return;
         }
 
@@ -435,7 +452,7 @@ public class ActivitiUtil {
                 .createTaskQuery().processInstanceId(processInstanceId).singleResult();
 
         // 设置执行人
-        if(nextTask!=null) {
+        if (nextTask != null) {
             activitiUtil.taskService.setAssignee(nextTask.getId(), lastTask.getAssignee());
         }
     }
@@ -450,7 +467,8 @@ public class ActivitiUtil {
 
     /**
      * 动态增加任务
-     * @param task 当前任务
+     *
+     * @param task     当前任务
      * @param assignee 增加任务的指派人
      */
     public static void addTask(Task task, String assignee) throws Exception {
@@ -459,7 +477,9 @@ public class ActivitiUtil {
         // 取得所有历史任务按时间降序排序
         List<HistoricTaskInstance> htiList = getHistoryTaskList(processInstanceId);
 
-        if (ObjectUtils.isEmpty(htiList) || htiList.size() < 2) {
+        Integer size = 2;
+
+        if (ObjectUtils.isEmpty(htiList) || htiList.size() < size) {
             return;
         }
 
@@ -531,7 +551,6 @@ public class ActivitiUtil {
         System.out.println("加签成功");
 
 
-
 //        FlowElement nextUserFlowElement = getNextUserFlowElement(task);
 //        System.out.println("下个任务为：" + nextUserFlowElement.getName());
     }
@@ -539,10 +558,11 @@ public class ActivitiUtil {
 
     /**
      * 创建任务,指定执行人
-     * @param assignee 登录用户
+     *
+     * @param assignee        登录用户
      * @param assigneeNewTask 执行人
      */
-    public static void createTask(String assignee,String parentTaskId, String assigneeNewTask){
+    public static void createTask(String assignee, String parentTaskId, String assigneeNewTask) {
         activitiUtil.securityUtil.logInAs(assignee);
         activitiUtil.taskRuntime.create(
                 TaskPayloadBuilder.create()
@@ -557,6 +577,7 @@ public class ActivitiUtil {
 
     /**
      * 获取当前任务节点的下一个任务节点
+     *
      * @param task 当前任务节点
      * @return 下个任务节点
      * @throws Exception
@@ -566,36 +587,34 @@ public class ActivitiUtil {
         HistoricTaskInstance historicTaskInstance = activitiUtil.historyService.createHistoricTaskInstanceQuery()
                 .taskId(task.getId()).singleResult();
 
-        // 取得正在流转的流程实例,若已完成则为null
-//        ProcessInstance processInstance = processRuntime.processInstance(historicTaskInstance.getProcessInstanceId());
-
-        //每个流程实例只有一个executionId
-        //获得流程定义
-        ProcessDefinition processDefinition=activitiUtil.repositoryService.getProcessDefinition(historicTaskInstance.getProcessDefinitionId());
+        // 获得流程定义
+        ProcessDefinition processDefinition = activitiUtil.repositoryService.getProcessDefinition(historicTaskInstance.getProcessDefinitionId());
 
         //获得当前流程的活动ID
-        ExecutionQuery executionQuery =activitiUtil.runtimeService.createExecutionQuery();
-        Execution execution =executionQuery.executionId(historicTaskInstance.getExecutionId()).singleResult();
-        String activityId=execution.getActivityId();
-        UserTask userTask =null;
-        while (true){
+        ExecutionQuery executionQuery = activitiUtil.runtimeService.createExecutionQuery();
+        Execution execution = executionQuery.executionId(historicTaskInstance.getExecutionId()).singleResult();
+        String activityId = execution.getActivityId();
+        UserTask userTask = null;
+        while (true) {
             //根据活动节点获取当前的组件信息
-            FlowNode flowNode =getFlowNode(processDefinition.getId(),activityId);
+            FlowNode flowNode = getFlowNode(processDefinition.getId(), activityId);
             //获取该流程组件的之后/之前的组件信息
-            List<SequenceFlow> sequenceFlowListOutGoing=flowNode.getOutgoingFlows();
+            List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
 //        List<SequenceFlow> sequenceFlowListIncoming=flowNode.getIncomingFlows();
 
-            //获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
-            //sequenceFlowListOutGoing数量可能大于1,可以自己做判断,此处只取第一个
-            FlowElement flowElement =sequenceFlowListOutGoing.get(0).getTargetFlowElement();
-            if (flowElement instanceof UserTask){
-                userTask =(UserTask)flowElement;
+            /**
+             * 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
+             * sequenceFlowListOutGoing数量可能大于1,可以自己做判断,此处只取第一个
+             */
+            FlowElement flowElement = sequenceFlowListOutGoing.get(0).getTargetFlowElement();
+            if (flowElement instanceof UserTask) {
+                userTask = (UserTask) flowElement;
                 System.out.println("下个任务为:" + userTask.getName());
                 break;
-            }else {
+            } else {
                 //下一节点不是任务userTask的任务节点,所以要获取再下一个节点的信息,直到获取到userTask任务节点信息
-                String flowElementId=flowElement.getId();
-                activityId=flowElementId;
+                String flowElementId = flowElement.getId();
+                activityId = flowElementId;
                 continue;
             }
         }
@@ -605,7 +624,7 @@ public class ActivitiUtil {
     /**
      * 根据活动节点和流程定义ID获取该活动节点的组件信息
      */
-    public static FlowNode getFlowNode(String processDefinitionId,String activityId){
+    public static FlowNode getFlowNode(String processDefinitionId, String activityId) {
         BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(processDefinitionId);
         FlowNode flowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(activityId);
         return flowNode;
@@ -613,19 +632,20 @@ public class ActivitiUtil {
 
     /**
      * 跳转任务
+     *
      * @param assignee
      */
     public static void jumpTask(String assignee) {
         activitiUtil.securityUtil.logInAs(assignee);
-        Page<Task> tasks = getTaskList(assignee,0, 10);
-        if( tasks.getTotalItems() > 0) {
+        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
             for (Task task : tasks.getContent()) {
                 System.out.println(task);
                 ProcessEngine defaultProcessEngine = ProcessEngines.getDefaultProcessEngine();
                 ManagementService managementService = defaultProcessEngine.getManagementService();
                 // 跳转到userTask1
-                managementService.executeCommand(new JumpCmd(task.getId(),"usertask1"));
+                managementService.executeCommand(new JumpCmd(task.getId(), "usertask1"));
             }
         }
     }
@@ -683,7 +703,7 @@ public class ActivitiUtil {
                 for (SequenceFlow sequenceFlow : sequenceFlows) {
                     for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
                         if (historicActivityInstance.getActivityId().equals(sequenceFlow.getTargetRef())) {
-                            Map<String, Object> map = new HashMap<>();
+                            Map<String, Object> map = new HashMap<>(16);
                             map.put("highLightedFlowId", sequenceFlow.getId());
                             map.put("highLightedFlowStartTime", historicActivityInstance.getStartTime().getTime());
                             tempMapList.add(map);
@@ -744,14 +764,7 @@ public class ActivitiUtil {
             ProcessEngineConfigurationImpl processEngineConfiguration = (ProcessEngineConfigurationImpl) processEngine.getProcessEngineConfiguration();
 
 
-            // 如果还没完成，流程图高亮颜色为绿色，如果已经完成为红色
-//            if (!CollectionUtils.isEmpty(historicFinishedProcessInstances)) {
-//                // 如果不为空，说明已经完成
-//                processDiagramGenerator = processEngineConfiguration.getProcessDiagramGenerator();
-//            } else {
-////                processDiagramGenerator = new CustomProcessDiagramGenerator();
-//            }
-                processDiagramGenerator = new DefaultProcessDiagramGenerator();
+            processDiagramGenerator = new DefaultProcessDiagramGenerator();
 
             BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(historicProcessInstance.getProcessDefinitionId());
             // 高亮流程已发生流转的线id集合
@@ -765,9 +778,10 @@ public class ActivitiUtil {
 //                    highLightedActivitiIds, highLightedFlowIds, "宋体", "微软雅黑", "黑体", null, 2.0);
 
             // 输出图片内容
-            byte[] b = new byte[1024];
+            Integer byteSize = 1024;
+            byte[] b = new byte[byteSize];
             int len;
-            while ((len = imageStream.read(b, 0, 1024)) != -1) {
+            while ((len = imageStream.read(b, 0, byteSize)) != -1) {
                 outputStream.write(b, 0, len);
             }
         } catch (Exception e) {
