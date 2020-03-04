@@ -2,6 +2,9 @@ package com.zp.activitispringboot.utils;
 
 import com.zp.activitispringboot.cmd.JumpCmd;
 import com.zp.activitispringboot.custom.CustomProcessDiagramGenerator;
+import com.zp.activitispringboot.dto.MyTaskDto;
+import de.odysseus.el.ExpressionFactoryImpl;
+import de.odysseus.el.util.SimpleContext;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessRuntime;
@@ -17,9 +20,6 @@ import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
-import org.activiti.engine.impl.context.Context;
-import org.activiti.engine.impl.interceptor.Command;
-import org.activiti.engine.impl.interceptor.CommandContext;
 import org.activiti.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
@@ -36,6 +36,8 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
+import javax.el.ExpressionFactory;
+import javax.el.ValueExpression;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
@@ -61,6 +63,9 @@ public class ActivitiUtil {
     @Autowired
     private TaskRuntime taskRuntime;
 
+    @Autowired
+    private CustomTaskRuntimeImpl customTaskRuntimeImpl;
+
     /**
      * security工具类
      */
@@ -80,6 +85,11 @@ public class ActivitiUtil {
     private RuntimeService runtimeService;
 
     private static ActivitiUtil activitiUtil;
+
+    public static org.activiti.engine.task.Task getTask(String taskId) {
+        org.activiti.engine.task.Task task = activitiUtil.taskService.createTaskQuery().taskId(taskId).singleResult();
+        return task;
+    }
 
     @PostConstruct
     public void init() {
@@ -257,7 +267,9 @@ public class ActivitiUtil {
      */
     public static Page<Task> getTaskList(String assignee, Integer startNum, Integer endNum) {
         activitiUtil.securityUtil.logInAs(assignee);
-        return activitiUtil.taskRuntime.tasks(Pageable.of(startNum, endNum));
+//        activitiUtil.taskRuntime.create(new CreateTaskPayload().setAssignee(assignee));
+//        List<org.activiti.engine.task.Task> list = activitiUtil.taskService.createTaskQuery().taskAssignee(assignee).list();
+        return activitiUtil.customTaskRuntimeImpl.tasks(Pageable.of(startNum, endNum));
     }
 
 
@@ -291,6 +303,27 @@ public class ActivitiUtil {
                 .start(ProcessPayloadBuilder
                         .start()
                         .withProcessDefinitionKey(processKey)
+                        .withName(processName)
+                        .withVariables(variables)
+                        .build());
+        logger.info("流程实例启动成功: " + processInstance);
+    }
+
+    /**
+     * @param username    用户名
+     * @param processKey  流程Key => 对应bpmn文件里的id
+     * @param businessKey 业务Key => 与业务表关联
+     * @param processName 流程实例名
+     * @param variables   变量map
+     */
+    public static void startProcessInstance(String username,
+                                            String processKey, String processName, String businessKey, HashMap variables) {
+        activitiUtil.securityUtil.logInAs(username);
+        ProcessInstance processInstance = activitiUtil.processRuntime
+                .start(ProcessPayloadBuilder
+                        .start()
+                        .withProcessDefinitionKey(processKey)
+                        .withBusinessKey(businessKey)
                         .withName(processName)
                         .withVariables(variables)
                         .build());
@@ -560,16 +593,35 @@ public class ActivitiUtil {
 
     /**
      * 创建任务,指定执行人
+     * 注意这个任务不会影响整个流程的进行
      *
      * @param assignee        登录用户
      * @param assigneeNewTask 执行人
      */
-    public static void createTask(String assignee, String parentTaskId, String assigneeNewTask) {
+    public static Task createTask(String assignee, String assigneeNewTask) {
+        activitiUtil.securityUtil.logInAs(assignee);
+        return activitiUtil.taskRuntime.create(
+                TaskPayloadBuilder.create()
+                        .withName("zhihui")
+                        .withDescription("知会")
+                        .withAssignee(assigneeNewTask)
+                        .withPriority(10)
+                        .build());
+    }
+
+    /**
+     * 创建子任务,指定执行人
+     * 注意这个任务不会影响整个流程的进行
+     *
+     * @param assignee        登录用户
+     * @param assigneeNewTask 执行人
+     */
+    public static void createSubTask(String assignee, String parentTaskId, String assigneeNewTask) {
         activitiUtil.securityUtil.logInAs(assignee);
         activitiUtil.taskRuntime.create(
                 TaskPayloadBuilder.create()
-                        .withName("First Team Task")
-                        .withDescription("This is something really important")
+                        .withName("zhihui")
+                        .withDescription("知会")
                         .withParentTaskId(parentTaskId)
                         .withAssignee(assigneeNewTask)
                         .withPriority(10)
@@ -607,27 +659,147 @@ public class ActivitiUtil {
              * 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
              * sequenceFlowListOutGoing数量可能大于1,可以自己做判断,此处只取第一个
              */
-            FlowElement flowElement = sequenceFlowListOutGoing.get(0).getTargetFlowElement();
-            if (flowElement instanceof UserTask) {
-                userTask = (UserTask) flowElement;
-                System.out.println("下个任务为:" + userTask.getName());
-                break;
-            } else {
-                //下一节点不是任务userTask的任务节点,所以要获取再下一个节点的信息,直到获取到userTask任务节点信息
-                String flowElementId = flowElement.getId();
-                activityId = flowElementId;
-                continue;
+//            FlowElement flowElement = sequenceFlowListOutGoing.get(0).getTargetFlowElement();
+//            if (flowElement instanceof UserTask) {
+//                userTask = (UserTask) flowElement;
+//                System.out.println("下个任务为:" + userTask.getName());
+//                break;
+//            } else {
+//                //下一节点不是任务userTask的任务节点,所以要获取再下一个节点的信息,直到获取到userTask任务节点信息
+//                String flowElementId = flowElement.getId();
+//                activityId = flowElementId;
+//                continue;
+//            }
+            for (SequenceFlow sequenceFlow : sequenceFlowListOutGoing) {
+                // 下个节点
+                FlowElement flowElement = sequenceFlow.getTargetFlowElement();
+                if (flowElement instanceof UserTask) {
+                    // 下个节点为UserTask时
+                    userTask = (UserTask) flowElement;
+                    System.out.println("下个任务为:" + userTask.getName());
+                    return userTask;
+                } else if (flowElement instanceof ExclusiveGateway) {
+                    // 下个节点为排它网关时
+                    ExclusiveGateway exclusiveGateway = (ExclusiveGateway) flowElement;
+                    List<SequenceFlow> outgoingFlows = exclusiveGateway.getOutgoingFlows();
+                    // 遍历网关的出线
+                    for (SequenceFlow outgoingFlow : outgoingFlows) {
+                        // 取得线上的条件
+                        String conditionExpression = outgoingFlow.getConditionExpression();
+                        // 取得所有变量
+                        Map<String, Object> variables = activitiUtil.runtimeService.getVariables(execution.getId());
+                        String variableName = "";
+                        // 判断网关条件里是否包含变量名
+                        for (String s : variables.keySet()) {
+                            if (conditionExpression.contains(s)) {
+                                // 找到网关条件里的变量名
+                                variableName = s;
+                            }
+                        }
+                        String conditionVal = getGatewayConditionVal(variableName, task.getProcessInstanceId());
+                        // 判断el表达式是否成立
+                        if (isCondition(variableName, conditionExpression, conditionVal)) {
+                            // 取得目标节点
+                            FlowElement targetFlowElement = outgoingFlow.getTargetFlowElement();
+                            activityId = targetFlowElement.getId();
+                            continue;
+                        }
+                    }
+
+
+                }
             }
         }
-        return userTask;
+//        return null;
+    }
+
+//    public static FlowElement goToNextElement(String processDefinitionId,
+//                                              String executionId, String flowElementId){
+//        //根据活动节点获取当前的组件信息
+//        FlowNode flowNode = getFlowNode(processDefinitionId, flowElementId);
+//        //获取该流程组件的之后/之前的组件信息
+//        List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
+//
+//        FlowElement userTask = null;
+//
+//        for (SequenceFlow sequenceFlow : sequenceFlowListOutGoing) {
+//            // 下个节点
+//            FlowElement flowElement = sequenceFlow.getTargetFlowElement();
+//            if (flowElement instanceof UserTask) {
+//                // 下个节点为UserTask时
+//                userTask = (UserTask) flowElement;
+//                System.out.println("下个任务为:" + userTask.getName());
+//                return userTask;
+//            } else if (flowElement instanceof ExclusiveGateway) {
+//                // 下个节点为排它网关时
+//                ExclusiveGateway exclusiveGateway = (ExclusiveGateway) flowElement;
+//                List<SequenceFlow> outgoingFlows = exclusiveGateway.getOutgoingFlows();
+//                // 遍历网关的出线
+//                for (SequenceFlow outgoingFlow : outgoingFlows) {
+//                    // 取得线上的条件
+//                    String conditionExpression = outgoingFlow.getConditionExpression();
+//                    // 取得所有变量
+//                    Map<String, Object> variables = activitiUtil.runtimeService.getVariables(execution.getId());
+//                    String variableName = "";
+//                    // 判断网关条件里是否包含变量名
+//                    for (String s : variables.keySet()) {
+//                        if(conditionExpression.contains(s)){
+//                            // 找到网关条件里的变量名
+//                            variableName = s;
+//                        }
+//                    }
+//                    String conditionVal = getGatewayConditionVal(variableName, task.getProcessInstanceId());
+//                    // 判断el表达式是否成立
+//                    if (isCondition(variableName, conditionExpression, conditionVal)) {
+//                        // 取得目标节点
+//                        FlowElement targetFlowElement = outgoingFlow.getTargetFlowElement();
+//                        activityId = targetFlowElement.getId();
+//                        continue;
+//                    }
+//                }
+//
+//
+//            }
+//        }
+//    }
+
+
+    /**
+     * 查询流程启动时设置排他网关判断条件信息
+     *
+     * @param gatewayId         排他网关Id信息, 流程启动时设置网关路线判断条件key为网关Id信息
+     * @param processInstanceId 流程实例Id信息
+     * @return
+     */
+    public static String getGatewayConditionVal(String gatewayId, String processInstanceId) {
+        Execution execution = activitiUtil.runtimeService
+                .createExecutionQuery().processInstanceId(processInstanceId).list().get(0);
+        Object object = activitiUtil.runtimeService.getVariable(execution.getId(), gatewayId);
+        return object == null ? "" : object.toString();
+    }
+
+    /**
+     * 根据key和value判断el表达式是否通过信息
+     *
+     * @param key   el表达式key信息
+     * @param el    el表达式信息
+     * @param value el表达式传入值信息
+     * @return
+     */
+    public static boolean isCondition(String key, String el, String value) {
+        ExpressionFactory factory = new ExpressionFactoryImpl();
+        SimpleContext context = new SimpleContext();
+        context.setVariable(key, factory.createValueExpression(value, String.class));
+        ValueExpression e = factory.createValueExpression(context, el, boolean.class);
+        return (Boolean) e.getValue(context);
     }
 
     /**
      * 根据活动节点和流程定义ID获取该活动节点的组件信息
      */
-    public static FlowNode getFlowNode(String processDefinitionId, String activityId) {
+    public static FlowNode getFlowNode(String processDefinitionId, String flowElementId) {
         BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(processDefinitionId);
-        FlowNode flowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(activityId);
+        FlowNode flowNode = (FlowNode) bpmnModel.getMainProcess().getFlowElement(flowElementId);
         return flowNode;
     }
 
@@ -812,5 +984,49 @@ public class ActivitiUtil {
             logger.error("processInstanceId" + processInstanceId + "生成流程图失败，原因：" + e.getMessage(), e);
         }
 
+    }
+
+    public static List<MyTaskDto> getAllFlowElements(String processDefinitionId, String processInstanceId) {
+        BpmnModel bpmnModel = activitiUtil.repositoryService.getBpmnModel(processDefinitionId);
+        Process process = bpmnModel.getMainProcess();
+        Collection<FlowElement> flowElements = process.getFlowElements();
+        // 获取流程中已经执行的节点，按照执行先后顺序排序
+        List<HistoricActivityInstance> historicActivityInstances = activitiUtil.historyService
+                .createHistoricActivityInstanceQuery()
+                .processInstanceId(processInstanceId)
+                .orderByHistoricActivityInstanceId()
+                .asc().list();
+        List<MyTaskDto> list = new ArrayList<>();
+        List<String> idList = new ArrayList<>();
+        Integer index = 1;
+        for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
+            String activityId = historicActivityInstance.getActivityId();
+            FlowElement flowElement = process.getFlowElement(activityId);
+            MyTaskDto myTaskDto = new MyTaskDto();
+            myTaskDto.setTaskId(flowElement.getId());
+            myTaskDto.setTaskName(flowElement.getName());
+            if (index == historicActivityInstances.size() && historicActivityInstance.getEndTime() != null) {
+                myTaskDto.setTaskStatus("当前任务");
+            } else {
+                myTaskDto.setTaskStatus("已完成任务");
+            }
+            list.add(myTaskDto);
+            idList.add(flowElement.getId());
+            index++;
+        }
+
+        for (FlowElement flowElement : flowElements) {
+            if (flowElement instanceof UserTask || flowElement instanceof Event) {
+                if (!idList.contains(flowElement.getId())) {
+                    MyTaskDto myTaskDto = new MyTaskDto();
+                    myTaskDto.setTaskId(flowElement.getId());
+                    myTaskDto.setTaskName(flowElement.getName());
+                    myTaskDto.setTaskStatus("未开始任务");
+                    list.add(myTaskDto);
+
+                }
+            }
+        }
+        return list;
     }
 }
