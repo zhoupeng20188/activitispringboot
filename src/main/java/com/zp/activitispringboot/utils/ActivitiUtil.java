@@ -269,6 +269,7 @@ public class ActivitiUtil {
         activitiUtil.securityUtil.logInAs(assignee);
 //        activitiUtil.taskRuntime.create(new CreateTaskPayload().setAssignee(assignee));
 //        List<org.activiti.engine.task.Task> list = activitiUtil.taskService.createTaskQuery().taskAssignee(assignee).list();
+//        return activitiUtil.customTaskRuntimeImpl.tasks(Pageable.of(startNum, endNum));
         return activitiUtil.customTaskRuntimeImpl.tasks(Pageable.of(startNum, endNum));
     }
 
@@ -596,13 +597,14 @@ public class ActivitiUtil {
      * 注意这个任务不会影响整个流程的进行
      *
      * @param assignee        登录用户
+     * @param taskName        任务名
      * @param assigneeNewTask 执行人
      */
-    public static Task createTask(String assignee, String assigneeNewTask) {
+    public static Task createTask(String assignee, String taskName, String assigneeNewTask) {
         activitiUtil.securityUtil.logInAs(assignee);
         return activitiUtil.taskRuntime.create(
                 TaskPayloadBuilder.create()
-                        .withName("zhihui")
+                        .withName(taskName)
                         .withDescription("知会")
                         .withAssignee(assigneeNewTask)
                         .withPriority(10)

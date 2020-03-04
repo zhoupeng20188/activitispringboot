@@ -8,7 +8,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -45,13 +44,20 @@ public class MyExclusiveGatewayTests {
         ActivitiUtil.startProcessInstance(username, key, "请假", businessKey, map);
     }
 
+    /**
+     * 知会实现
+     * 即新建一个任务,此任务与流程无关,不管此任务完成与否都不影响整个流程的走向
+     */
     @Test
     public void createTask() {
         String assignee = "zhangsan";
         String assigneeNewTask = "zhaoliu";
-        Task task = ActivitiUtil.createTask(assignee, assigneeNewTask);
-//        org.activiti.engine.task.Task task = ActivitiUtil.getTask(task.getId());
-        System.out.println(task.getBusinessKey());
+        // 取得业务key
+        String businessKey = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0).getBusinessKey();
+        // 将业务key设为task名称,为的是以后取得这条记录时能拿到业务key
+        String taskName = businessKey;
+        Task task = ActivitiUtil.createTask(assignee, taskName, assigneeNewTask);
+        System.out.println("任务创建成功:" + task);
     }
 
     @Test
@@ -86,13 +92,15 @@ public class MyExclusiveGatewayTests {
         String assignee = "zhaoliu";
         Page<Task> taskList = ActivitiUtil.getTaskList(assignee, 0, 10);
         for (Task task : taskList.getContent()) {
-            String parentTaskId = task.getParentTaskId();
-            System.out.println("父任务id为:" + parentTaskId);
-            if (!StringUtils.isEmpty(parentTaskId)) {
-                org.activiti.engine.task.Task parentTask = ActivitiUtil.getTask(parentTaskId);
-                String businessKey = parentTask.getBusinessKey();
+//            String parentTaskId = task.getParentTaskId();
+//            System.out.println("父任务id为:" + parentTaskId);
+//            if (!StringUtils.isEmpty(parentTaskId)) {
+//                org.activiti.engine.task.Task parentTask = ActivitiUtil.getTask(parentTaskId);
+//                String businessKey = parentTask.getBusinessKey();
+//                System.out.println("业务key为：" + businessKey);
+//            }
+            String businessKey = task.getName();
                 System.out.println("业务key为：" + businessKey);
-            }
         }
     }
 
