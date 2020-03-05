@@ -14,6 +14,11 @@ import java.io.FileOutputStream;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * 测试排它网关的流程跟踪
+ * 测试知会功能
+ * 测试根据assignee和businessKey查找任务并完成
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class MyExclusiveGatewayTests {
@@ -53,10 +58,9 @@ public class MyExclusiveGatewayTests {
         String assignee = "zhangsan";
         String assigneeNewTask = "zhaoliu";
         // 取得业务key
-        String businessKey = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0).getBusinessKey();
+        String businessKey = "test.1";
         // 将业务key设为task名称,为的是以后取得这条记录时能拿到业务key
-        String taskName = businessKey;
-        Task task = ActivitiUtil.createTask(assignee, taskName, assigneeNewTask);
+        Task task = ActivitiUtil.createTask(assignee, businessKey, assigneeNewTask);
         System.out.println("任务创建成功:" + task);
     }
 
@@ -78,6 +82,19 @@ public class MyExclusiveGatewayTests {
     public void testCompleteTask() {
         String assignee = "zhangsan";
         ActivitiUtil.completeTask(assignee);
+    }
+
+    @Test
+    public void testCompleteTaskWithBusinessKey() {
+        String assignee = "zhangsan";
+        String businessKey = "test.1";
+        ActivitiUtil.completeTask(assignee, businessKey);
+    }
+
+    @Test
+    public void testCompleteTaskOld() {
+        String assignee = "zhangsan";
+        ActivitiUtil.completeTaskOld(assignee);
     }
 
 
@@ -113,7 +130,8 @@ public class MyExclusiveGatewayTests {
     @Test
     public void testCompleteTask2() {
         String assignee = "lisi";
-        ActivitiUtil.completeTask(assignee);
+        String businessKey = "test.1";
+        ActivitiUtil.completeTask(assignee, businessKey);
     }
 
     @Test

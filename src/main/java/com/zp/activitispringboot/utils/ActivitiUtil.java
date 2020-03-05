@@ -10,11 +10,10 @@ import org.activiti.api.process.model.builders.ProcessPayloadBuilder;
 import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.runtime.shared.query.Pageable;
-import org.activiti.api.task.model.Task;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.runtime.TaskRuntime;
-import org.activiti.bpmn.model.Process;
 import org.activiti.bpmn.model.*;
+import org.activiti.bpmn.model.Process;
 import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
@@ -25,6 +24,7 @@ import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ExecutionQuery;
+import org.activiti.engine.task.Task;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.activiti.image.impl.DefaultProcessDiagramGenerator;
 import org.slf4j.Logger;
@@ -147,20 +147,58 @@ public class ActivitiUtil {
     }
 
     /**
-     * 完成任务
+     * 完成指派人所有任务
      *
      * @param assignee 指派人
      */
     public static void completeTask(String assignee) {
 
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 // 完成任务
                 activitiUtil.taskRuntime.complete(
                         TaskPayloadBuilder.complete().withTaskId(task.getId()).build());
+                logger.info(assignee + "完成任务");
+            }
+        }
+    }
+
+    /**
+     * 完成指派人当前业务key对应的任务
+     *
+     * @param assignee 指派人
+     */
+    public static void completeTask(String assignee, String businessKey) {
+
+        Task task = getTask(assignee, businessKey);
+        if (task != null) {
+            // 有任务时，完成任务
+            System.out.println(task);
+            // 完成任务
+            activitiUtil.taskRuntime.complete(
+                    TaskPayloadBuilder.complete().withTaskId(task.getId()).build());
+            logger.info(assignee + "完成任务");
+        }
+    }
+
+    /**
+     * 完成指派人所有任务
+     * 6.0版本
+     *
+     * @param assignee 指派人
+     */
+    public static void completeTaskOld(String assignee) {
+
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
+        if (tasks.getTotalItems() > 0) {
+            // 有任务时，完成任务
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
+                System.out.println(task);
+                // 完成任务
+                activitiUtil.taskService.complete(task.getId());
                 logger.info(assignee + "完成任务");
             }
         }
@@ -174,10 +212,10 @@ public class ActivitiUtil {
      */
     public static void completeTaskWithVariables(String assignee, HashMap variables) {
 
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 // 完成任务
                 activitiUtil.taskRuntime.complete(
@@ -196,10 +234,10 @@ public class ActivitiUtil {
      */
     public static void completeTaskWithGroup(String assignee) {
 
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 // 拾取任务
                 activitiUtil.taskRuntime.claim(
@@ -220,10 +258,10 @@ public class ActivitiUtil {
      */
     public static void completeTaskWithGroupWithVariables(String assignee, HashMap variables) {
 
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 // 拾取任务
                 activitiUtil.taskRuntime.claim(
@@ -248,10 +286,10 @@ public class ActivitiUtil {
      * @param endNum   分页结束下标
      */
     public static void printTaskList(String assignee, Integer startNum, Integer endNum) {
-        Page<Task> tasks = getTaskList(assignee, startNum, endNum);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, startNum, endNum);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 logger.info("任务: " + task);
             }
         }
@@ -265,12 +303,44 @@ public class ActivitiUtil {
      * @param endNum   分页结束下标
      * @return 任务list
      */
-    public static Page<Task> getTaskList(String assignee, Integer startNum, Integer endNum) {
+    public static Page<org.activiti.api.task.model.Task> getTaskList(String assignee, Integer startNum, Integer endNum) {
         activitiUtil.securityUtil.logInAs(assignee);
-//        activitiUtil.taskRuntime.create(new CreateTaskPayload().setAssignee(assignee));
-//        List<org.activiti.engine.task.Task> list = activitiUtil.taskService.createTaskQuery().taskAssignee(assignee).list();
-//        return activitiUtil.customTaskRuntimeImpl.tasks(Pageable.of(startNum, endNum));
         return activitiUtil.customTaskRuntimeImpl.tasks(Pageable.of(startNum, endNum));
+    }
+
+    /**
+     * 查询当前指派人当前业务Key对应的流程实例中的任务
+     *
+     * @param assignee    指派人
+     * @param businessKey 业务key
+     * @param startNum    分页开始下标
+     * @param endNum      分页结束下标
+     * @return 任务list
+     */
+    public static List<Task> getTaskList(String assignee, String businessKey, Integer startNum, Integer endNum) {
+        activitiUtil.securityUtil.logInAs(assignee);
+        List<Task> list = activitiUtil.taskService
+                .createTaskQuery()
+                .taskAssignee(assignee)
+                .processInstanceBusinessKey(businessKey)
+                .listPage(startNum, endNum);
+        return list;
+    }
+
+    /**
+     * 查询当前指派人当前业务Key对应的流程实例中的任务
+     * 某一时间内一个业务key对应的指派人的任务应该是唯一的
+     * @param assignee    指派人
+     * @param businessKey 业务key
+     * @return 任务list
+     */
+    public static Task getTask(String assignee, String businessKey) {
+        activitiUtil.securityUtil.logInAs(assignee);
+        return activitiUtil.taskService
+                .createTaskQuery()
+                .taskAssignee(assignee)
+                .processInstanceBusinessKey(businessKey)
+                .singleResult();
     }
 
 
@@ -341,10 +411,10 @@ public class ActivitiUtil {
      */
     public static void auditByCandidate(String assignee, boolean auditFlg, HashMap variables) throws Exception {
 
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 // 拾取任务
                 activitiUtil.taskRuntime.claim(
@@ -407,7 +477,7 @@ public class ActivitiUtil {
      *
      * @param task 当前任务
      */
-    public static void backProcess(Task task) throws Exception {
+    public static void backProcess(org.activiti.api.task.model.Task task) throws Exception {
 
         String processInstanceId = task.getProcessInstanceId();
 
@@ -600,7 +670,7 @@ public class ActivitiUtil {
      * @param taskName        任务名
      * @param assigneeNewTask 执行人
      */
-    public static Task createTask(String assignee, String taskName, String assigneeNewTask) {
+    public static org.activiti.api.task.model.Task createTask(String assignee, String taskName, String assigneeNewTask) {
         activitiUtil.securityUtil.logInAs(assignee);
         return activitiUtil.taskRuntime.create(
                 TaskPayloadBuilder.create()
@@ -638,7 +708,7 @@ public class ActivitiUtil {
      * @return 下个任务节点
      * @throws Exception
      */
-    public static FlowElement getNextUserFlowElement(Task task) throws Exception {
+    public static FlowElement getNextUserFlowElement(org.activiti.api.task.model.Task task) throws Exception {
         // 取得已提交的任务
         HistoricTaskInstance historicTaskInstance = activitiUtil.historyService.createHistoricTaskInstanceQuery()
                 .taskId(task.getId()).singleResult();
@@ -812,10 +882,10 @@ public class ActivitiUtil {
      */
     public static void jumpTask(String assignee) {
         activitiUtil.securityUtil.logInAs(assignee);
-        Page<Task> tasks = getTaskList(assignee, 0, 10);
+        Page<org.activiti.api.task.model.Task> tasks = getTaskList(assignee, 0, 10);
         if (tasks.getTotalItems() > 0) {
             // 有任务时，完成任务
-            for (Task task : tasks.getContent()) {
+            for (org.activiti.api.task.model.Task task : tasks.getContent()) {
                 System.out.println(task);
                 ProcessEngine defaultProcessEngine = ProcessEngines.getDefaultProcessEngine();
                 ManagementService managementService = defaultProcessEngine.getManagementService();

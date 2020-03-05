@@ -66,7 +66,7 @@ public class JiaqianTest {
         // 动态加签,并设置加签节点的执行人
         Task task = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0);
         String assigneeJiaqian = "wangwu";
-        ActivitiUtil.addTask(task, assigneeJiaqian);
+        ActivitiUtil.addTask((org.activiti.engine.task.Task) task, assigneeJiaqian);
 
 
 //        ActivitiUtil.createTask(assignee, task.getId(), assigneeJiaqian);
