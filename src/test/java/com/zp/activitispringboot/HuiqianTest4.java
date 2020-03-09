@@ -81,10 +81,10 @@ public class HuiqianTest4 {
     public void testAdd(){
         String assignee = "lisi";
         Task task = ActivitiUtil.getTaskList(assignee, 0, 10).getContent().get(0);
-        Execution execution = runtimeService.createExecutionQuery().processInstanceId(task.getProcessInstanceId()).list().get(0);
-        String executionId = execution.getId();
         String taskId = task.getId();
-        System.out.println(executionId);
+//        Execution execution = runtimeService.createExecutionQuery().processInstanceId(task.getProcessInstanceId()).list().get(0);
+//        String executionId = execution.getId();
+//        System.out.println(executionId);
 //        List<String> assignee2List = (List<String>) runtimeService.getVariable(executionId, "assignee2List");
 //        assignee2List.add("wangwu");
 //        runtimeService.setVariable(executionId,"assignee2List", assignee2List);

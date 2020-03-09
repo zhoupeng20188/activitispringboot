@@ -383,6 +383,27 @@ public class ActivitiUtil {
     /**
      * @param username    用户名
      * @param processKey  流程Key => 对应bpmn文件里的id
+     * @param processName 流程实例名
+     * @param businessKey   businessKey
+     */
+    public static ProcessInstance startProcessInstance(String username,
+                                                         String processKey, String processName,
+                                                       String businessKey) {
+        activitiUtil.securityUtil.logInAs(username);
+        ProcessInstance processInstance = activitiUtil.processRuntime
+                .start(ProcessPayloadBuilder
+                        .start()
+                        .withProcessDefinitionKey(processKey)
+                        .withName(processName)
+                        .withBusinessKey(businessKey)
+                        .build());
+        logger.info("流程实例启动成功: " + processInstance);
+        return processInstance;
+    }
+
+    /**
+     * @param username    用户名
+     * @param processKey  流程Key => 对应bpmn文件里的id
      * @param businessKey 业务Key => 与业务表关联
      * @param processName 流程实例名
      * @param variables   变量map

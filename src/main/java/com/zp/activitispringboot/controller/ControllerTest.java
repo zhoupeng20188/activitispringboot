@@ -1,6 +1,9 @@
 package com.zp.activitispringboot.controller;
 
+import com.zp.activitispringboot.dto.ProcessInstanceDto;
+import com.zp.activitispringboot.utils.ActivitiUtil;
 import com.zp.activitispringboot.utils.SecurityUtil;
+import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.runtime.shared.query.Pageable;
@@ -8,8 +11,11 @@ import org.activiti.api.task.runtime.TaskRuntime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Objects;
 
 @RestController
 public class ControllerTest {
@@ -35,7 +41,7 @@ public class ControllerTest {
     @Autowired
     private SecurityUtil securityUtil;
 
-    @RequestMapping("/definition/list")
+    @RequestMapping("/process/definition/list")
     public Object testDefinition() {
 //        securityUtil.logInAs("f1");
         Page processDefinitionPage = processRuntime
@@ -47,5 +53,18 @@ public class ControllerTest {
         }
 
         return processDefinitionPage;
+    }
+
+    @RequestMapping("/process/instance/start")
+    public Object testInstance(@RequestBody ProcessInstanceDto dto) {
+        ProcessInstance processInstance = null;
+        if(Objects.isNull(dto.getVariables())){
+
+            processInstance =ActivitiUtil.startProcessInstance(
+                    "zhangsan",dto.getProcessDefinitionKey(), dto.getProcessInstanceName(),
+                    dto.getBusinessKey());
+        }
+
+        return processInstance;
     }
 }
