@@ -3,6 +3,7 @@ package com.zp.activitispringboot.controller;
 import com.zp.activitispringboot.dto.ProcessInstanceDto;
 import com.zp.activitispringboot.utils.ActivitiUtil;
 import com.zp.activitispringboot.utils.SecurityUtil;
+import org.activiti.api.process.model.ProcessDefinition;
 import org.activiti.api.process.model.ProcessInstance;
 import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.runtime.shared.query.Page;
@@ -13,8 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.websocket.server.PathParam;
 import java.util.Objects;
 
 @RestController
@@ -53,6 +56,24 @@ public class ControllerTest {
         }
 
         return processDefinitionPage;
+    }
+
+    @RequestMapping("/process/definition/get")
+    public Object testDefinitionGet(@RequestParam String processDefinitionId) {
+//        securityUtil.logInAs("f1");
+        ProcessDefinition processDefinition = processRuntime
+                .processDefinition(processDefinitionId);
+
+        return processDefinition;
+    }
+
+    @RequestMapping("/process/instance/get")
+    public Object testInstanceGet(@RequestParam String processInstanceId) {
+//        securityUtil.logInAs("f1");
+        ProcessInstance processInstance = processRuntime
+                .processInstance(processInstanceId);
+
+        return processInstance;
     }
 
     @RequestMapping("/process/instance/start")
