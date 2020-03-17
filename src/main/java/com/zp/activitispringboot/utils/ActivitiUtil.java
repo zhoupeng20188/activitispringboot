@@ -755,25 +755,18 @@ public class ActivitiUtil {
         while (true) {
             //根据活动节点获取当前的组件信息
             FlowNode flowNode = getFlowNode(processDefinition.getId(), activityId);
-            //获取该流程组件的之后/之前的组件信息
+            //获取该节点之后的流向
             List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
 
-            /**
-             * 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
-             * sequenceFlowListOutGoing数量可能大于1,可以自己做判断,此处只取第一个
-             */
-//            FlowElement flowElement = sequenceFlowListOutGoing.get(0).getTargetFlowElement();
-//            if (flowElement instanceof UserTask) {
-//                userTask = (UserTask) flowElement;
-//                System.out.println("下个任务为:" + userTask.getName());
-//                break;
-//            } else {
-//                //下一节点不是任务userTask的任务节点,所以要获取再下一个节点的信息,直到获取到userTask任务节点信息
-//                String flowElementId = flowElement.getId();
-//                activityId = flowElementId;
-//                continue;
-//            }
-            for (SequenceFlow sequenceFlow : sequenceFlowListOutGoing) {
+            // 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
+            if (sequenceFlowListOutGoing.size() > 1) {
+                // 如果有1条以上的出线，表示有分支，需要判断分支的条件才能知道走哪个分支
+                // 遍历节点的出线得到下个activityId
+                activityId = getNextActivityId(execution.getId(),
+                        task.getProcessInstanceId(), sequenceFlowListOutGoing);
+            } else if (sequenceFlowListOutGoing.size() == 1) {
+                // 只有1条出线,直接取得下个节点
+                SequenceFlow sequenceFlow = sequenceFlowListOutGoing.get(0);
                 // 下个节点
                 FlowElement flowElement = sequenceFlow.getTargetFlowElement();
                 if (flowElement instanceof UserTask) {
@@ -785,108 +778,93 @@ public class ActivitiUtil {
                     // 下个节点为排它网关时
                     ExclusiveGateway exclusiveGateway = (ExclusiveGateway) flowElement;
                     List<SequenceFlow> outgoingFlows = exclusiveGateway.getOutgoingFlows();
-                    // 遍历网关的出线
-                    for (SequenceFlow outgoingFlow : outgoingFlows) {
-                        // 取得线上的条件
-                        String conditionExpression = outgoingFlow.getConditionExpression();
-                        // 取得所有变量
-                        Map<String, Object> variables = activitiUtil.runtimeService.getVariables(execution.getId());
-                        String variableName = "";
-                        // 判断网关条件里是否包含变量名
-                        for (String s : variables.keySet()) {
-                            if (conditionExpression.contains(s)) {
-                                // 找到网关条件里的变量名
-                                variableName = s;
-                            }
-                        }
-                        String conditionVal = getGatewayConditionVal(variableName, task.getProcessInstanceId());
-                        // 判断el表达式是否成立
-                        if (isCondition(variableName, conditionExpression, conditionVal)) {
-                            // 取得目标节点
-                            FlowElement targetFlowElement = outgoingFlow.getTargetFlowElement();
-                            activityId = targetFlowElement.getId();
-                            continue;
-                        }
-                    }
-
-
+                    // 遍历网关的出线得到下个activityId
+                    activityId = getNextActivityId(execution.getId(), task.getProcessInstanceId(), outgoingFlows);
                 }
+
+            } else {
+                // 没有出线，则表明是结束节点
+                return null;
             }
         }
-//        return null;
-    }
 
-//    public static FlowElement goToNextElement(String processDefinitionId,
-//                                              String executionId, String flowElementId){
-//        //根据活动节点获取当前的组件信息
-//        FlowNode flowNode = getFlowNode(processDefinitionId, flowElementId);
-//        //获取该流程组件的之后/之前的组件信息
-//        List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
-//
-//        FlowElement userTask = null;
-//
-//        for (SequenceFlow sequenceFlow : sequenceFlowListOutGoing) {
-//            // 下个节点
-//            FlowElement flowElement = sequenceFlow.getTargetFlowElement();
-//            if (flowElement instanceof UserTask) {
-//                // 下个节点为UserTask时
-//                userTask = (UserTask) flowElement;
-//                System.out.println("下个任务为:" + userTask.getName());
-//                return userTask;
-//            } else if (flowElement instanceof ExclusiveGateway) {
-//                // 下个节点为排它网关时
-//                ExclusiveGateway exclusiveGateway = (ExclusiveGateway) flowElement;
-//                List<SequenceFlow> outgoingFlows = exclusiveGateway.getOutgoingFlows();
-//                // 遍历网关的出线
-//                for (SequenceFlow outgoingFlow : outgoingFlows) {
-//                    // 取得线上的条件
-//                    String conditionExpression = outgoingFlow.getConditionExpression();
-//                    // 取得所有变量
-//                    Map<String, Object> variables = activitiUtil.runtimeService.getVariables(execution.getId());
-//                    String variableName = "";
-//                    // 判断网关条件里是否包含变量名
-//                    for (String s : variables.keySet()) {
-//                        if(conditionExpression.contains(s)){
-//                            // 找到网关条件里的变量名
-//                            variableName = s;
-//                        }
-//                    }
-//                    String conditionVal = getGatewayConditionVal(variableName, task.getProcessInstanceId());
-//                    // 判断el表达式是否成立
-//                    if (isCondition(variableName, conditionExpression, conditionVal)) {
-//                        // 取得目标节点
-//                        FlowElement targetFlowElement = outgoingFlow.getTargetFlowElement();
-//                        activityId = targetFlowElement.getId();
-//                        continue;
-//                    }
-//                }
-//
-//
-//            }
-//        }
-//    }
+    }
 
 
     /**
-     * 查询流程启动时设置排他网关判断条件信息
+     * 获取所有任务节点
      *
-     * @param gatewayId         排他网关Id信息, 流程启动时设置网关路线判断条件key为网关Id信息
-     * @param processInstanceId 流程实例Id信息
+     * @throws Exception
+     */
+    public static FlowElement getAllNode(String processDefinitionId, String processInstanceId, String activityId) {
+        // 取得已提交的任务
+        HistoricTaskInstance historicTaskInstance = activitiUtil.historyService.createHistoricTaskInstanceQuery()
+                .list().get(0);
+
+        //获得当前流程的活动ID
+        ExecutionQuery executionQuery = activitiUtil.runtimeService.createExecutionQuery();
+        Execution execution = executionQuery.executionId(historicTaskInstance.getExecutionId()).singleResult();
+        UserTask userTask;
+        while (true) {
+            //根据活动节点获取当前的组件信息
+            FlowNode flowNode = getFlowNode(processDefinitionId, activityId);
+            //获取该节点之后的流向
+            List<SequenceFlow> sequenceFlowListOutGoing = flowNode.getOutgoingFlows();
+
+            // 获取的下个节点不一定是userTask的任务节点，所以要判断是否是任务节点
+            if (sequenceFlowListOutGoing.size() > 1) {
+                // 如果有1条以上的出线，表示有分支，需要判断分支的条件才能知道走哪个分支
+                // 遍历节点的出线得到下个activityId
+                activityId = getNextActivityId(execution.getId(),
+                        processInstanceId, sequenceFlowListOutGoing);
+                return getFlowNode(processDefinitionId, activityId);
+            } else if (sequenceFlowListOutGoing.size() == 1) {
+                // 只有1条出线,直接取得下个节点
+                SequenceFlow sequenceFlow = sequenceFlowListOutGoing.get(0);
+                // 下个节点
+                FlowElement flowElement = sequenceFlow.getTargetFlowElement();
+                if (flowElement instanceof UserTask) {
+                    // 下个节点为UserTask时
+                    userTask = (UserTask) flowElement;
+                    return userTask;
+                } else if (flowElement instanceof ExclusiveGateway) {
+                    // 下个节点为排它网关时
+                    ExclusiveGateway exclusiveGateway = (ExclusiveGateway) flowElement;
+                    List<SequenceFlow> outgoingFlows = exclusiveGateway.getOutgoingFlows();
+                    // 遍历网关的出线得到下个activityId
+                    activityId = getNextActivityId(execution.getId(), processInstanceId, outgoingFlows);
+                } else{
+                    // 没有出线，则表明是结束节点
+                    return null;
+                }
+
+            } else {
+                // 没有出线，则表明是结束节点
+                return null;
+            }
+        }
+    }
+
+    /**
+     * 取得流程变量的值
+     *
+     * @param variableName      变量名
+     * @param processInstanceId 流程实例Id
      * @return
      */
-    public static String getGatewayConditionVal(String gatewayId, String processInstanceId) {
+    public static String getVariableValue(String variableName, String processInstanceId) {
         Execution execution = activitiUtil.runtimeService
                 .createExecutionQuery().processInstanceId(processInstanceId).list().get(0);
-        Object object = activitiUtil.runtimeService.getVariable(execution.getId(), gatewayId);
+        Object object = activitiUtil.runtimeService.getVariable(execution.getId(), variableName);
         return object == null ? "" : object.toString();
     }
 
     /**
-     * 根据key和value判断el表达式是否通过信息
+     * 根据key和value判断el表达式是否通过
      *
-     * @param key   el表达式key信息
-     * @param el    el表达式信息
-     * @param value el表达式传入值信息
+     * @param key   el表达式key
+     * @param el    el表达式
+     * @param value el表达式传入值
      * @return
      */
     public static boolean isCondition(String key, String el, String value) {
@@ -895,6 +873,43 @@ public class ActivitiUtil {
         context.setVariable(key, factory.createValueExpression(value, String.class));
         ValueExpression e = factory.createValueExpression(context, el, boolean.class);
         return (Boolean) e.getValue(context);
+    }
+
+    /**
+     * 根据el表达式取得满足条件的下一个activityId
+     * @param executionId
+     * @param processInstanceId
+     * @param outgoingFlows
+     * @return
+     */
+    public static String getNextActivityId(String executionId,
+                                           String processInstanceId,
+                                           List<SequenceFlow> outgoingFlows) {
+        String activityId = null;
+        // 遍历出线
+        for (SequenceFlow outgoingFlow : outgoingFlows) {
+            // 取得线上的条件
+            String conditionExpression = outgoingFlow.getConditionExpression();
+            // 取得所有变量
+            Map<String, Object> variables = activitiUtil.runtimeService.getVariables(executionId);
+            String variableName = "";
+            // 判断网关条件里是否包含变量名
+            for (String s : variables.keySet()) {
+                if (conditionExpression.contains(s)) {
+                    // 找到网关条件里的变量名
+                    variableName = s;
+                }
+            }
+            String conditionVal = getVariableValue(variableName, processInstanceId);
+            // 判断el表达式是否成立
+            if (isCondition(variableName, conditionExpression, conditionVal)) {
+                // 取得目标节点
+                FlowElement targetFlowElement = outgoingFlow.getTargetFlowElement();
+                activityId = targetFlowElement.getId();
+                continue;
+            }
+        }
+        return activityId;
     }
 
     /**
@@ -1110,7 +1125,7 @@ public class ActivitiUtil {
             FlowNode flowNode = (FlowNode) flowElement;
             List<SequenceFlow> outgoingFlows = flowNode.getOutgoingFlows();
             for (SequenceFlow outgoingFlow : outgoingFlows) {
-                outgoingFlow
+//                outgoingFlow
             }
             MyTaskDto myTaskDto = new MyTaskDto();
             myTaskDto.setTaskId(flowElement.getId());

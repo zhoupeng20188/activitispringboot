@@ -3,20 +3,28 @@ package com.zp.activitispringboot;
 import com.zp.activitispringboot.cmd.AddMultiInstanceCmd;
 import com.zp.activitispringboot.dto.MyTaskDto;
 import com.zp.activitispringboot.utils.ActivitiUtil;
+import com.zp.activitispringboot.utils.SecurityUtil;
+import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.task.model.Task;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.FlowElement;
+import org.activiti.bpmn.model.FlowNode;
 import org.activiti.bpmn.model.Process;
 import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
+import org.activiti.engine.runtime.Execution;
+import org.activiti.engine.runtime.ExecutionQuery;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.parameters.P;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 
@@ -34,6 +42,13 @@ public class Simple2Test {
 
     @Autowired
     RepositoryService repositoryService;
+    @Autowired
+    ProcessRuntime processRuntime;
+    /**
+     * security工具类
+     */
+    @Autowired
+    private SecurityUtil securityUtil;
 
     @Test
     public void testDefiniton() {
@@ -72,18 +87,18 @@ public class Simple2Test {
     }
 
     @Test
-    public void addComment(){
+    public void addComment() {
         String assignee = "lisi";
         String taskId = "ffea7f1d-6803-11ea-8360-1c1b0d7b318e";
         String comment = "Test Message222";
-        ActivitiUtil.addComment(assignee,taskId, comment);
+        ActivitiUtil.addComment(assignee, taskId, comment);
     }
 
     @Test
-    public void getComment(){
+    public void getComment() {
         String assignee = "lisi";
         String taskId = "ffea7f1d-6803-11ea-8360-1c1b0d7b318e";
-        ActivitiUtil.getComment(assignee,taskId);
+        ActivitiUtil.getComment(assignee, taskId);
     }
 
 
@@ -130,6 +145,38 @@ public class Simple2Test {
     public void testCompleteTask4() {
         String assignee = "zhaoliu";
         ActivitiUtil.completeTask(assignee);
+    }
+
+
+    @Test
+    public void testGetNextTask() {
+        String assignee = "zhangsan";
+        String processDefinitionId = "simple2:3:8f790f83-681c-11ea-816b-1c1b0d7b318e";
+        String processInstanceId = "6186bc42-6825-11ea-bd86-1c1b0d7b318e";
+
+        securityUtil.logInAs(assignee);
+        ProcessInstance processInstance =
+                processRuntime.processInstance(processInstanceId);
+
+        if(processInstance.getStatus().name().equals("RUNNING")) {
+            // 当前实例在运行状态的场合
+
+            BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
+            List<FlowElement> flowElements = (List<FlowElement>) bpmnModel.getMainProcess().getFlowElements();
+
+            // 取得除开始节点以外的第一个节点
+            FlowElement flowNode = flowElements.get(1);
+            while (flowNode != null) {
+                System.out.println(flowNode.getId() + " " + flowNode.getName());
+                flowNode = ActivitiUtil.getAllNode(processDefinitionId,
+                        processInstanceId, flowNode.getId());
+            }
+        } else{
+            // 当前实例已结束的场合
+        }
+
+
+
     }
 
     @Test
