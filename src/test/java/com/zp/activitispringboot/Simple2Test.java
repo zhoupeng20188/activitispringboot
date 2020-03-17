@@ -21,13 +21,11 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * 多实例实现会签 并行
- * 在会签节点动态增加人员
- * 此示例通过条件为${nrOfInstances == nrOfCompletedInstances}
+ * 有分支时取得所有节点和所有任务测试
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class HuiqianTest4 {
+public class Simple2Test {
     @Autowired
     RuntimeService runtimeService;
 
@@ -45,15 +43,16 @@ public class HuiqianTest4 {
 
     @Test
     public void testProcessInstance() {
-        String key = "huiqian4";
+        String key = "simple2";
         String username = "zhangsan";
-        String businessKey = "iop-open-service.m_process.1";
+//        String businessKey = "iop-open-service.m_process.1";
 
         HashMap<String, Object> map = new HashMap<>();
         // 启动流程实例时给变量赋值
         map.put("assignee1", username);
+        map.put("num", 5);
 
-        ActivitiUtil.startProcessInstance(username, key, "会签", businessKey, map);
+        ActivitiUtil.startProcessInstanceWithVariables(username, key, "分支", map);
     }
 
     @Test
@@ -67,12 +66,24 @@ public class HuiqianTest4 {
         String assignee = "zhangsan";
         //设置会签人员
         HashMap map = new HashMap<String, Object>();
-        List<String> signList = new ArrayList<String>();
-        signList.add("lisi");
-//        signList.add("wangwu");
-        map.put("assignee2List", signList);
-        map.put("assignee3", "zhangsan");
+        map.put("assignee2", "lisi");
+        map.put("assignee3", "wangwu");
         ActivitiUtil.completeTaskWithVariables(assignee, map);
+    }
+
+    @Test
+    public void addComment(){
+        String assignee = "lisi";
+        String taskId = "ffea7f1d-6803-11ea-8360-1c1b0d7b318e";
+        String comment = "Test Message222";
+        ActivitiUtil.addComment(assignee,taskId, comment);
+    }
+
+    @Test
+    public void getComment(){
+        String assignee = "lisi";
+        String taskId = "ffea7f1d-6803-11ea-8360-1c1b0d7b318e";
+        ActivitiUtil.getComment(assignee,taskId);
     }
 
 
@@ -124,8 +135,8 @@ public class HuiqianTest4 {
     @Test
     public void testGetAllNode() {
         String assignee = "zhangsan";
-        String processDefinitionId = "huiqian4:1:63219f36-643a-11ea-a385-1c1b0d7b318e";
-        String processInstanceId = "6546f045-643a-11ea-a385-1c1b0d7b318e";
+        String processDefinitionId = "simple2:1:f15b89f1-6803-11ea-9fcb-1c1b0d7b318e";
+        String processInstanceId = "f3036d9c-6803-11ea-9fcb-1c1b0d7b318e";
         List<MyTaskDto> allFlowElements = ActivitiUtil.getAllFlowElements(processDefinitionId, processInstanceId);
         for (MyTaskDto allFlowElement : allFlowElements) {
             System.out.println(allFlowElement.getTaskId() + " " + allFlowElement.getTaskName() + " " + allFlowElement.getTaskStatus());

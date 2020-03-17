@@ -12,8 +12,8 @@ import org.activiti.api.runtime.shared.query.Page;
 import org.activiti.api.runtime.shared.query.Pageable;
 import org.activiti.api.task.model.builders.TaskPayloadBuilder;
 import org.activiti.api.task.runtime.TaskRuntime;
-import org.activiti.bpmn.model.*;
 import org.activiti.bpmn.model.Process;
+import org.activiti.bpmn.model.*;
 import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricActivityInstance;
 import org.activiti.engine.history.HistoricProcessInstance;
@@ -24,6 +24,7 @@ import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
 import org.activiti.engine.runtime.ExecutionQuery;
+import org.activiti.engine.task.Comment;
 import org.activiti.engine.task.Task;
 import org.activiti.image.ProcessDiagramGenerator;
 import org.activiti.image.impl.DefaultProcessDiagramGenerator;
@@ -330,6 +331,7 @@ public class ActivitiUtil {
     /**
      * 查询当前指派人当前业务Key对应的流程实例中的任务
      * 某一时间内一个业务key对应的指派人的任务应该是唯一的
+     *
      * @param assignee    指派人
      * @param businessKey 业务key
      * @return 任务list
@@ -384,10 +386,10 @@ public class ActivitiUtil {
      * @param username    用户名
      * @param processKey  流程Key => 对应bpmn文件里的id
      * @param processName 流程实例名
-     * @param businessKey   businessKey
+     * @param businessKey businessKey
      */
     public static ProcessInstance startProcessInstance(String username,
-                                                         String processKey, String processName,
+                                                       String processKey, String processName,
                                                        String businessKey) {
         activitiUtil.securityUtil.logInAs(username);
         ProcessInstance processInstance = activitiUtil.processRuntime
@@ -589,6 +591,14 @@ public class ActivitiUtil {
                 .processInstanceId(processInstanceId)
                 .orderByTaskCreateTime()
                 .desc()
+                .list();
+    }
+
+    public static List<HistoricTaskInstance> getAssigneeHistoryTaskList(String assignee) {
+        return activitiUtil.historyService.createHistoricTaskInstanceQuery()
+                .taskAssignee(assignee)
+                .orderByTaskCreateTime()
+                .asc()
                 .list();
     }
 
@@ -1087,18 +1097,26 @@ public class ActivitiUtil {
         List<HistoricActivityInstance> historicActivityInstances = activitiUtil.historyService
                 .createHistoricActivityInstanceQuery()
                 .processInstanceId(processInstanceId)
-                .orderByHistoricActivityInstanceId()
-                .asc().list();
+                .orderByHistoricActivityInstanceStartTime()
+//                .orderByHistoricActivityInstanceId()
+                .asc()
+                .list();
         List<MyTaskDto> list = new ArrayList<>();
         List<String> idList = new ArrayList<>();
         Integer index = 1;
         for (HistoricActivityInstance historicActivityInstance : historicActivityInstances) {
             String activityId = historicActivityInstance.getActivityId();
             FlowElement flowElement = process.getFlowElement(activityId);
+            FlowNode flowNode = (FlowNode) flowElement;
+            List<SequenceFlow> outgoingFlows = flowNode.getOutgoingFlows();
+            for (SequenceFlow outgoingFlow : outgoingFlows) {
+                outgoingFlow
+            }
             MyTaskDto myTaskDto = new MyTaskDto();
             myTaskDto.setTaskId(flowElement.getId());
             myTaskDto.setTaskName(flowElement.getName());
-            if (index == historicActivityInstances.size() && historicActivityInstance.getEndTime() != null) {
+            if (index == historicActivityInstances.size()
+                    && ObjectUtils.isEmpty(historicActivityInstance.getEndTime())) {
                 myTaskDto.setTaskStatus("当前任务");
             } else {
                 myTaskDto.setTaskStatus("已完成任务");
@@ -1121,5 +1139,30 @@ public class ActivitiUtil {
             }
         }
         return list;
+    }
+
+    /**
+     * 根据id获取任务
+     *
+     * @param taskId 任务id
+     * @return Task
+     */
+    public static Task getTaskById(String taskId) {
+        return activitiUtil.taskService.createTaskQuery().taskId(taskId).singleResult();
+    }
+
+    public static void addComment(String username,String taskId, String comment) {
+        activitiUtil.securityUtil.logInAs(username);
+        Task task = getTaskById(taskId);
+        String processInstanceId = task.getProcessInstanceId();
+        activitiUtil.taskService.addComment(taskId,processInstanceId, comment);
+    }
+
+    public static void getComment(String username, String taskId){
+        activitiUtil.securityUtil.logInAs(username);
+        List<Comment> list = activitiUtil.taskService.getTaskComments(taskId);
+        for (Comment comment : list) {
+            System.out.println(comment.getFullMessage());
+        }
     }
 }
