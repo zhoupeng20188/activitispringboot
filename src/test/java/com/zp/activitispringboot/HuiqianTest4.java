@@ -3,6 +3,9 @@ package com.zp.activitispringboot;
 import com.zp.activitispringboot.cmd.AddMultiInstanceCmd;
 import com.zp.activitispringboot.dto.MyTaskDto;
 import com.zp.activitispringboot.utils.ActivitiUtil;
+import com.zp.activitispringboot.utils.SecurityUtil;
+import org.activiti.api.process.model.ProcessInstance;
+import org.activiti.api.process.runtime.ProcessRuntime;
 import org.activiti.api.task.model.Task;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.FlowElement;
@@ -37,6 +40,14 @@ public class HuiqianTest4 {
     @Autowired
     RepositoryService repositoryService;
 
+    @Autowired
+    ProcessRuntime processRuntime;
+    /**
+     * security工具类
+     */
+    @Autowired
+    private SecurityUtil securityUtil;
+
     @Test
     public void testDefiniton() {
         String username = "zhangsan";
@@ -47,11 +58,16 @@ public class HuiqianTest4 {
     public void testProcessInstance() {
         String key = "huiqian4";
         String username = "zhangsan";
-        String businessKey = "iop-open-service.m_process.1";
+        String businessKey = "iop-open-service.m_process.3";
 
         HashMap<String, Object> map = new HashMap<>();
         // 启动流程实例时给变量赋值
         map.put("assignee1", username);
+        List<String> signList = new ArrayList<String>();
+        signList.add("lisi");
+//        signList.add("wangwu");
+        map.put("assignee2List", signList);
+        map.put("assignee3", "zhangsan");
 
         ActivitiUtil.startProcessInstance(username, key, "会签", businessKey, map);
     }
@@ -66,13 +82,14 @@ public class HuiqianTest4 {
     public void testCompleteTask() {
         String assignee = "zhangsan";
         //设置会签人员
-        HashMap map = new HashMap<String, Object>();
-        List<String> signList = new ArrayList<String>();
-        signList.add("lisi");
+//        HashMap map = new HashMap<String, Object>();
+//        List<String> signList = new ArrayList<String>();
+//        signList.add("lisi");
 //        signList.add("wangwu");
-        map.put("assignee2List", signList);
-        map.put("assignee3", "zhangsan");
-        ActivitiUtil.completeTaskWithVariables(assignee, map);
+//        map.put("assignee2List", signList);
+//        map.put("assignee3", "zhangsan");
+//        ActivitiUtil.completeTaskWithVariables(assignee, map);
+        ActivitiUtil.completeTask(assignee);
     }
 
 
@@ -106,6 +123,40 @@ public class HuiqianTest4 {
     public void testCompleteTask2() {
         String assignee = "lisi";
         ActivitiUtil.completeTask(assignee);
+    }
+
+    @Test
+    public void testGetNextTask() {
+        String assignee = "zhangsan";
+        String processDefinitionId = "huiqian4:7:ae632b5e-68b7-11ea-8250-1c1b0d7b318e";
+        String processInstanceId = "c1268626-68b8-11ea-a19e-1c1b0d7b318e";
+
+        securityUtil.logInAs(assignee);
+        ProcessInstance processInstance =
+                processRuntime.processInstance(processInstanceId);
+
+        List<HistoricTaskInstance> historyTaskList = ActivitiUtil.getHistoryTaskList(processInstanceId);
+        String executionId = historyTaskList.get(0).getExecutionId();
+
+        if (processInstance.getStatus().name().equals("RUNNING")) {
+            // 当前实例在运行状态的场合
+
+            BpmnModel bpmnModel = repositoryService.getBpmnModel(processDefinitionId);
+            List<FlowElement> flowElements = (List<FlowElement>) bpmnModel.getMainProcess().getFlowElements();
+
+            // 取得除开始节点以外的第一个节点
+            FlowElement flowNode = flowElements.get(1);
+            while (flowNode != null) {
+                System.out.println(flowNode.getId() + " " + flowNode.getName());
+                ActivitiUtil.getFlowElementStatus(flowNode, executionId);
+                flowNode = ActivitiUtil.getAllNode(processDefinitionId,
+                        processInstanceId, flowNode.getId());
+            }
+        } else {
+            // 当前实例已结束的场合
+        }
+
+
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.zp.activitispringboot.controller;
 
+import com.zp.activitispringboot.dto.MyTaskDto;
 import com.zp.activitispringboot.dto.ProcessInstanceDto;
 import com.zp.activitispringboot.utils.ActivitiUtil;
 import com.zp.activitispringboot.utils.SecurityUtil;
@@ -87,5 +88,14 @@ public class ControllerTest {
         }
 
         return processInstance;
+    }
+
+    @RequestMapping("/test")
+    public Object test(@RequestParam String a){
+        System.out.println(a);
+        MyTaskDto myTaskDto = new MyTaskDto();
+        myTaskDto.setTaskName("tetststtttt");
+        return myTaskDto;
+
     }
 }

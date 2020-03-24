@@ -20,6 +20,7 @@ import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricTaskInstance;
 import org.activiti.engine.impl.cfg.ProcessEngineConfigurationImpl;
 import org.activiti.engine.impl.persistence.deploy.ProcessDefinitionCacheEntry;
+import org.activiti.engine.impl.persistence.entity.TaskEntity;
 import org.activiti.engine.repository.Deployment;
 import org.activiti.engine.repository.ProcessDefinition;
 import org.activiti.engine.runtime.Execution;
@@ -1179,5 +1180,34 @@ public class ActivitiUtil {
         for (Comment comment : list) {
             System.out.println(comment.getFullMessage());
         }
+    }
+
+    /**
+     * 取得当前节点的状态（已完成/进行中/未开始）
+     *
+     * @param flowElement
+     * @return
+     */
+    public static String getFlowElementStatus(FlowElement flowElement, String executionId) {
+        Activity activity = (Activity) flowElement;
+        MultiInstanceLoopCharacteristics loopCharacteristics = activity.getLoopCharacteristics();
+        if (loopCharacteristics == null) {
+            // 节点为单实例的场合
+            UserTask userTask = (UserTask) flowElement;
+//            getTaskStatus();
+        } else {
+            // 节点为多实例的场合
+            // 获取完成任务实例数量
+            Integer nrOfCompletedInstances = (Integer) activitiUtil.runtimeService.getVariable(executionId, "nrOfCompletedInstances");
+            // 获取会签总实例数量
+            Integer numberOfInstances = (Integer) activitiUtil.runtimeService.getVariable(executionId, "numberOfInstances");
+
+            if(nrOfCompletedInstances.equals(numberOfInstances)){
+                // 已完成
+            } else{
+                // 进行中
+            }
+        }
+        return null;
     }
 }
