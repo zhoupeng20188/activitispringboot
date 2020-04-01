@@ -24,6 +24,11 @@
 * =》待确认 =》activiti7读的是target/classes下的processes里的bpmn文件，需要重新打包才会读取最新的bpmn文件
 * 上面结论不正确，看了源码暂时也没搞清楚怎么回事
 * 解决方法：用7之前的deploy方法来部署 => 此方法有问题，启动实例时会报错
+* =》最新结论：activiti7中的版本控制逻辑为：工程里需要有一个mainifest文件，在application.properties属性文件中用project.mainifest.file.path属性设定。
+当mainifest文件里的工程版本改变时，所有的流程定义的版本都会被改变。
+比如：现在工程版本是1，现在新加了一个流程图，我把工程版本改为2，这时所有流程图的版本都会被改成2
+而如果不改工程版本的话，新加的流程图是不会刷到数据库中的。
+其它问题可以参照我的博客：http://zpycloud.com/archives/category/%e5%b7%a5%e4%bd%9c%e6%b5%81%e5%bc%95%e6%93%8e/
 # 版本问题
 ## 7.1.0.M6
 * 新增bpmn流程图时新增的这个不会自动部署
