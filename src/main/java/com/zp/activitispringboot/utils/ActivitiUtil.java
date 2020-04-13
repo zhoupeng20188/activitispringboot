@@ -1210,4 +1210,15 @@ public class ActivitiUtil {
         }
         return null;
     }
+
+    /**
+     * 通过表达式获取其中的变量名
+     *
+     * @param expression 表达式
+     * @return 变量名
+     */
+    public static String getVariableNameByExpression(String expression) {
+        return expression.replace("${", "")
+                .replace("}", "");
+    }
 }

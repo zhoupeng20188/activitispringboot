@@ -1,5 +1,6 @@
 package com.zp.activitispringboot.cmd;
 
+import com.zp.activitispringboot.utils.ActivitiUtil;
 import org.activiti.bpmn.model.Activity;
 import org.activiti.bpmn.model.BpmnModel;
 import org.activiti.bpmn.model.MultiInstanceLoopCharacteristics;
@@ -57,9 +58,13 @@ public class AddMultiInstanceCmd implements Command {
         ExecutionEntity childExecution = executionEntityManager.createChildExecution(parentExecutionEntity);
         //获取并为新的执行实例设置当前活动节点
         UserTask currentFlowElement = (UserTask) multiExecutionEntity.getCurrentFlowElement();
-        //设置处理人
-        currentFlowElement.setAssignee(addUserTaskAssign);
+        // 获取该节点的变量表达式
+        String assigneeExpression = currentFlowElement.getAssignee();
+        // 根据表达式获取变量名
+        String assigneeValName = ActivitiUtil.getVariableNameByExpression(assigneeExpression);
         childExecution.setCurrentFlowElement(currentFlowElement);
+        // 设置处理人
+        childExecution.setVariableLocal(assigneeValName, addUserTaskAssign);
 
         //获取设置变量
         Integer nrOfInstances = (Integer) parentExecutionEntity.getVariableLocal(NUMBER_OF_INSTANCES);
